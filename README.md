@@ -19,4 +19,4 @@ A modern Tetris game built with pure JavaScript, styled in a cyberpunk aesthetic
 - P — pause
 
 ## 🌐 Live Demo
-https://твой-логин.github.io/cyberpunk-tetris/
+https://dedushka-moroz95.github.io/cyberpunk-tetris/
