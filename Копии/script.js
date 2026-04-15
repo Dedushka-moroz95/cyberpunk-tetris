@@ -115,12 +115,7 @@ function updateUI() {
   linesEl.textContent = lines;
   levelEl.textContent = level;
   bestEl.textContent = best;
-
   pauseBtn.textContent = isPaused ? "Продолжить" : "Пауза";
-
-  if (pauseTopBtn) {
-    pauseTopBtn.textContent = isPaused ? "▶" : "⏸";
-  }
 }
 
 function resetGame() {
@@ -577,9 +572,6 @@ const rightBtn = document.getElementById("rightBtn");
 const downBtn = document.getElementById("downBtn");
 const rotateBtn = document.getElementById("rotateBtn");
 const dropBtn = document.getElementById("dropBtn");
-const pauseTopBtn = document.getElementById("pauseTopBtn");
-
-pauseTopBtn.addEventListener("click", togglePause);
 
 function bindTouchButton(button, action) {
   if (!button) return;
