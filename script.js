@@ -565,3 +565,29 @@ clearBestBtn.addEventListener("click", () => {
 });
 
 resetGame();
+
+// УПРАВЛЕНИЕ кнопками
+const leftBtn = document.getElementById("leftBtn");
+const rightBtn = document.getElementById("rightBtn");
+const downBtn = document.getElementById("downBtn");
+const rotateBtn = document.getElementById("rotateBtn");
+const dropBtn = document.getElementById("dropBtn");
+
+function bindTouchButton(button, action) {
+  if (!button) return;
+
+  const handler = (event) => {
+    event.preventDefault();
+    if (isPaused || isGameOver || isClearing) return;
+    action();
+  };
+
+  button.addEventListener("click", handler);
+  button.addEventListener("touchstart", handler, { passive: false });
+}
+
+bindTouchButton(leftBtn, () => playerMove(-1));
+bindTouchButton(rightBtn, () => playerMove(1));
+bindTouchButton(downBtn, () => playerDrop());
+bindTouchButton(rotateBtn, () => playerRotate());
+bindTouchButton(dropBtn, () => hardDrop());

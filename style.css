@@ -35,7 +35,7 @@ body {
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 .noise {
@@ -309,6 +309,29 @@ kbd {
   height: 90px;
 }
 
+.mobile-controls {
+  display: none;
+}
+
+.touch-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.touch-grid button {
+  padding: 16px;
+  font-size: 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 246, 255, 0.3);
+  background: rgba(0, 246, 255, 0.08);
+  color: white;
+}
+
+#dropBtn {
+  grid-column: span 2;
+}
+
 @media (max-width: 900px) {
   body {
     overflow: auto;
@@ -319,12 +342,25 @@ kbd {
     grid-template-columns: 1fr;
   }
 
+  .game-panel {
+    height: auto;
+  }
+
   .sidebar {
     overflow: visible;
   }
 
   #game {
+    width: 100%;
+    max-width: 300px;
     height: auto;
-    width: min(100%, 260px);
+  }
+
+  .mobile-controls {
+    display: block;
+  }
+
+  .controls {
+    display: none;
   }
 }
