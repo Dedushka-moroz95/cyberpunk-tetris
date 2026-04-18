@@ -162,6 +162,7 @@ h1 {
   max-width: 100%;
   aspect-ratio: 1 / 2;
   background: linear-gradient(180deg, rgba(6, 10, 24, 0.98), rgba(2, 4, 12, 1));
+  touch-action: manipulation;
 }
 
 .scanlines {
@@ -311,14 +312,15 @@ kbd {
 
 .mobile-controls {
   display: none;
+  position: relative;
 }
 
 .toggle-mobile-controls-btn {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 32px;
-  height: 32px;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
   border: 1px solid rgba(0, 246, 255, 0.3);
   border-radius: 8px;
   background: rgba(0, 246, 255, 0.08);
@@ -326,7 +328,7 @@ kbd {
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
-  z-index: 2;
+  z-index: 3;
 }
 
 .mobile-controls.is-collapsed {
@@ -421,7 +423,7 @@ kbd {
   bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
   z-index: 1000;
   margin: 0;
-  padding: 10px;
+  ppadding: 12px 10px 10px;
   border-radius: 18px;
   background: rgba(8, 12, 30, 0.92);
   border: 1px solid rgba(0, 255, 255, 0.24);
@@ -430,9 +432,10 @@ kbd {
   }
 
   .mobile-controls h2 {
-    margin: 0 0 8px;
-    font-size: 0.9rem;
-  }
+  margin: 0 0 12px;
+  padding-right: 48px;
+  font-size: 0.9rem;
+}
 
   .touch-grid {
     display: grid;
@@ -460,12 +463,3 @@ kbd {
   }
 }
 
-#game {
-  display: block;
-  height: 100%;
-  width: auto;
-  max-width: 100%;
-  aspect-ratio: 1 / 2;
-  background: linear-gradient(180deg, rgba(6, 10, 24, 0.98), rgba(2, 4, 12, 1));
-  touch-action: manipulation;
-}
