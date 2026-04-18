@@ -79,6 +79,7 @@ let lastTime = 0;
 let dropCounter = 0;
 let isPaused = false;
 let isGameOver = false;
+let gameStarted = false;
 let animationId = null;
 let clearingRows = [];
 let clearAnimationStart = 0;
@@ -127,6 +128,7 @@ function resetGame() {
   dropCounter = 0;
   isPaused = false;
   isGameOver = false;
+  gameStarted = true;
 
   clearingRows = [];
   clearAnimationStart = 0;
@@ -262,14 +264,16 @@ function drawBoard() {
 
   drawGrid();
 
-  if (!isGameOver && player) {
+  if (gameStarted && !isGameOver && player) {
     drawGhost();
     drawMatrix(player.matrix, player.pos, COLORS[player.type]);
   }
 
   drawClearingRows();
 
-  if (isPaused || isGameOver) {
+  if (!gameStarted) {
+    drawOverlay("ТАП ДЛЯ СТАРТА");
+  } else if (isPaused || isGameOver) {
     drawOverlay(isGameOver ? "ПРОИГРЫШ" : "ПАУЗА");
   }
 }
@@ -505,9 +509,33 @@ function togglePause() {
   updateUI();
 }
 
+function handleCanvasTap(event) {
+  event.preventDefault();
+
+  if (!gameStarted) {
+    resetGame();
+    return;
+  }
+
+  if (isGameOver) {
+    resetGame();
+    return;
+  }
+
+  if (isClearing) return;
+
+  togglePause();
+}
+
 function update(time = 0) {
   const deltaTime = time - lastTime;
   lastTime = time;
+
+  if (!gameStarted) {
+    drawBoard();
+    animationId = requestAnimationFrame(update);
+    return;
+  }
 
   if (isClearing) {
     if (time - clearAnimationStart >= CLEAR_ANIMATION_DURATION) {
@@ -527,6 +555,7 @@ function update(time = 0) {
 }
 
 document.addEventListener("keydown", (event) => {
+  if (!gameStarted && event.code !== "Enter") return;
   if (isGameOver && event.code !== "Enter") return;
   if (isClearing) return;
 
@@ -564,7 +593,11 @@ clearBestBtn.addEventListener("click", () => {
   updateUI();
 });
 
-resetGame();
+canvas.addEventListener("click", handleCanvasTap);
+canvas.addEventListener("touchstart", handleCanvasTap, { passive: false });
+
+drawBoard();
+animationId = requestAnimationFrame(update);
 
 // УПРАВЛЕНИЕ кнопками
 const leftBtn = document.getElementById("leftBtn");
