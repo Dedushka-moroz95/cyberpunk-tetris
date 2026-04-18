@@ -313,6 +313,41 @@ kbd {
   display: none;
 }
 
+.toggle-mobile-controls-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(0, 246, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(0, 246, 255, 0.08);
+  color: white;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.mobile-controls.is-collapsed {
+  padding: 8px;
+  width: 56px;
+  left: auto;
+  right: 10px;
+}
+
+.mobile-controls.is-collapsed h2,
+.mobile-controls.is-collapsed .touch-grid {
+  display: none;
+}
+
+.mobile-controls.is-collapsed .toggle-mobile-controls-btn {
+  position: static;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+}
+
 .touch-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -379,19 +414,19 @@ kbd {
   }
 
   .mobile-controls {
-    display: block;
-    position: fixed;
-    left: 10px;
-    right: 10px;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
-    z-index: 1000;
-    margin: 0;
-    padding: 10px;
-    border-radius: 18px;
-    background: rgba(8, 12, 30, 0.92);
-    border: 1px solid rgba(0, 255, 255, 0.24);
-    backdrop-filter: blur(14px);
-    box-shadow: var(--shadow-cyan), var(--shadow-pink);
+  display: block;
+  position: fixed;
+  left: 10px;
+  right: 10px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+  z-index: 1000;
+  margin: 0;
+  padding: 10px;
+  border-radius: 18px;
+  background: rgba(8, 12, 30, 0.92);
+  border: 1px solid rgba(0, 255, 255, 0.24);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-cyan), var(--shadow-pink);
   }
 
   .mobile-controls h2 {
@@ -423,4 +458,14 @@ kbd {
   .note {
     margin-bottom: 6px;
   }
+}
+
+#game {
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  aspect-ratio: 1 / 2;
+  background: linear-gradient(180deg, rgba(6, 10, 24, 0.98), rgba(2, 4, 12, 1));
+  touch-action: manipulation;
 }

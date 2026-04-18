@@ -14,6 +14,21 @@ const restartBtn = document.getElementById("restartBtn");
 const pauseBtn = document.getElementById("pauseBtn");
 const clearBestBtn = document.getElementById("clearBestBtn");
 
+const mobileControls = document.getElementById("mobileControls");
+const toggleMobileControlsBtn = document.getElementById("toggleMobileControlsBtn");
+
+if (mobileControls && toggleMobileControlsBtn) {
+  toggleMobileControlsBtn.addEventListener("click", () => {
+    const isCollapsed = mobileControls.classList.toggle("is-collapsed");
+
+    toggleMobileControlsBtn.textContent = isCollapsed ? "⌃" : "—";
+    toggleMobileControlsBtn.setAttribute(
+      "aria-label",
+      isCollapsed ? "Развернуть управление" : "Свернуть управление"
+    );
+  });
+}
+
 const COLS = 10;
 const ROWS = 20;
 const BLOCK = canvas.width / COLS;
@@ -512,6 +527,10 @@ function togglePause() {
 function handleCanvasTap(event) {
   event.preventDefault();
 
+  if (event.pointerType && event.pointerType === "mouse" && event.button !== 0) {
+    return;
+  }
+
   if (!gameStarted) {
     resetGame();
     return;
@@ -593,8 +612,7 @@ clearBestBtn.addEventListener("click", () => {
   updateUI();
 });
 
-canvas.addEventListener("click", handleCanvasTap);
-canvas.addEventListener("touchstart", handleCanvasTap, { passive: false });
+canvas.addEventListener("pointerdown", handleCanvasTap);
 
 drawBoard();
 animationId = requestAnimationFrame(update);
