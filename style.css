@@ -423,13 +423,13 @@ kbd {
   bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
   z-index: 1000;
   margin: 0;
-  ppadding: 12px 10px 10px;
+  padding: 12px 10px 10px;
   border-radius: 18px;
   background: rgba(8, 12, 30, 0.92);
   border: 1px solid rgba(0, 255, 255, 0.24);
   backdrop-filter: blur(14px);
   box-shadow: var(--shadow-cyan), var(--shadow-pink);
-  }
+}
 
   .mobile-controls h2 {
   margin: 0 0 12px;
