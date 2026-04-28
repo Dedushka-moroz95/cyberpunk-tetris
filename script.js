@@ -4,6 +4,14 @@ const ctx = canvas.getContext("2d");
 const nextCanvas = document.getElementById("nextPiece");
 const nextCtx = nextCanvas.getContext("2d");
 
+const nextCanvasMobile = document.getElementById("nextPieceMobile");
+const nextCtxMobile = nextCanvasMobile ? nextCanvasMobile.getContext("2d") : null;
+
+const scoreMobileEl = document.getElementById("scoreMobile");
+const linesMobileEl = document.getElementById("linesMobile");
+const levelMobileEl = document.getElementById("levelMobile");
+const mobilePauseBtn = document.getElementById("mobilePauseBtn");
+
 const scoreEl = document.getElementById("score");
 const linesEl = document.getElementById("lines");
 const levelEl = document.getElementById("level");
@@ -131,7 +139,16 @@ function updateUI() {
   linesEl.textContent = lines;
   levelEl.textContent = level;
   bestEl.textContent = best;
+
+  if (scoreMobileEl) scoreMobileEl.textContent = score;
+  if (linesMobileEl) linesMobileEl.textContent = lines;
+  if (levelMobileEl) levelMobileEl.textContent = level;
+
   pauseBtn.textContent = isPaused ? "Продолжить" : "Пауза";
+
+  if (mobilePauseBtn) {
+    mobilePauseBtn.textContent = isPaused ? "▶" : "⏸";
+  }
 }
 
 function resetGame() {
@@ -218,43 +235,49 @@ function drawMatrix(matrix, offset, color, alpha = 1) {
 }
 
 function drawNextPiece() {
-  nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+  const targets = [
+    { ctx: nextCtx, canvas: nextCanvas, blockSize: 24 },
+    { ctx: nextCtxMobile, canvas: nextCanvasMobile, blockSize: 18 },
+  ].filter((target) => target.ctx && target.canvas);
 
-  if (!nextPiece) return;
+  targets.forEach(({ ctx, canvas, blockSize }) => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const matrix = nextPiece.matrix;
-  const color = COLORS[nextPiece.type];
+    if (!nextPiece) return;
 
-  const blockSize = 24;
-  const matrixWidth = matrix[0].length * blockSize;
-  const matrixHeight = matrix.length * blockSize;
+    const matrix = nextPiece.matrix;
+    const color = COLORS[nextPiece.type];
 
-  const offsetX = (nextCanvas.width - matrixWidth) / 2;
-  const offsetY = (nextCanvas.height - matrixHeight) / 2;
+    const matrixWidth = matrix[0].length * blockSize;
+    const matrixHeight = matrix.length * blockSize;
 
-  matrix.forEach((row, y) => {
-    row.forEach((value, x) => {
-      if (!value) return;
+    const offsetX = (canvas.width - matrixWidth) / 2;
+    const offsetY = (canvas.height - matrixHeight) / 2;
 
-      const px = offsetX + x * blockSize;
-      const py = offsetY + y * blockSize;
+    matrix.forEach((row, y) => {
+      row.forEach((value, x) => {
+        if (!value) return;
 
-      nextCtx.save();
+        const px = offsetX + x * blockSize;
+        const py = offsetY + y * blockSize;
 
-      nextCtx.shadowBlur = 12;
-      nextCtx.shadowColor = color;
-      nextCtx.fillStyle = color;
-      nextCtx.fillRect(px, py, blockSize, blockSize);
+        ctx.save();
 
-      nextCtx.shadowBlur = 0;
-      nextCtx.strokeStyle = "rgba(10, 18, 35, 0.85)";
-      nextCtx.lineWidth = 2;
-      nextCtx.strokeRect(px, py, blockSize, blockSize);
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = color;
+        ctx.fillStyle = color;
+        ctx.fillRect(px, py, blockSize, blockSize);
 
-      nextCtx.fillStyle = "rgba(255,255,255,0.18)";
-      nextCtx.fillRect(px + 2, py + 2, blockSize - 4, 4);
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = "rgba(10, 18, 35, 0.85)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(px, py, blockSize, blockSize);
 
-      nextCtx.restore();
+        ctx.fillStyle = "rgba(255,255,255,0.18)";
+        ctx.fillRect(px + 2, py + 2, blockSize - 4, 4);
+
+        ctx.restore();
+      });
     });
   });
 }
@@ -287,7 +310,7 @@ function drawBoard() {
   drawClearingRows();
 
   if (!gameStarted) {
-    drawOverlay("ТАП ДЛЯ СТАРТА");
+    drawOverlay("ТАП — СТАРТ\nТАП — ПАУЗА");
   } else if (isPaused || isGameOver) {
     drawOverlay(isGameOver ? "ПРОИГРЫШ" : "ПАУЗА");
   }
@@ -612,6 +635,13 @@ clearBestBtn.addEventListener("click", () => {
   updateUI();
 });
 
+if (mobilePauseBtn) {
+  mobilePauseBtn.addEventListener("click", () => {
+    if (!gameStarted || isGameOver || isClearing) return;
+    togglePause();
+  });
+}
+
 canvas.addEventListener("pointerdown", handleCanvasTap);
 
 drawBoard();
@@ -627,18 +657,38 @@ const dropBtn = document.getElementById("dropBtn");
 function bindTouchButton(button, action) {
   if (!button) return;
 
-  const handler = (event) => {
+  let interval = null;
+
+  button.addEventListener("pointerdown", (event) => {
     event.preventDefault();
+
     if (isPaused || isGameOver || isClearing) return;
-    action();
+
+    action(); // первый шаг сразу
+
+    interval = setInterval(action, 120); // удержание
+  });
+
+  const stop = () => {
+    if (interval) {
+      clearInterval(interval);
+      interval = null;
+    }
   };
 
-  button.addEventListener("click", handler);
-  button.addEventListener("touchstart", handler, { passive: false });
+  button.addEventListener("pointerup", stop);
+  button.addEventListener("pointerleave", stop);
+  button.addEventListener("pointercancel", stop);
 }
 
 bindTouchButton(leftBtn, () => playerMove(-1));
 bindTouchButton(rightBtn, () => playerMove(1));
 bindTouchButton(downBtn, () => playerDrop());
 bindTouchButton(rotateBtn, () => playerRotate());
-bindTouchButton(dropBtn, () => hardDrop());
+if (dropBtn) {
+  dropBtn.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    if (isPaused || isGameOver || isClearing) return;
+    hardDrop();
+  });
+}

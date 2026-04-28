@@ -16,15 +16,41 @@
         </div>
         <div class="status" id="status">ONLINE</div>
       </div>
+        
+      <section class="mobile-hud">
+          <div class="mobile-stats">
+            <div class="mini-stat">
+              <span>Счет</span>
+              <strong id="scoreMobile">0</strong>
+            </div>
+            <div class="mini-stat">
+              <span>Уровень</span>
+              <strong id="levelMobile">1</strong>
+            </div>
+            <div class="mini-stat">
+              <span>Линии</span>
+              <strong id="linesMobile">0</strong>
+            </div>
+          </div>
 
-      <div class="canvas-wrap">
+          <div class="mobile-hud-row">
+            <div class="mobile-next-box">
+              <span class="mobile-next-label">Следующая</span>
+              <canvas id="nextPieceMobile" width="88" height="88"></canvas>
+            </div>
+
+            <button id="mobilePauseBtn" class="mobile-pause-btn" type="button" aria-label="Пауза">⏸</button>
+          </div>
+      </section>
+      
+        <div class="canvas-wrap">
         <canvas id="game" width="300" height="600"></canvas>
         <div class="scanlines"></div>
       </div>
     </section>
 
     <aside class="sidebar">
-      <section class="card">
+      <section class="card stats-card">
         <h2>Отчет</h2>
         <div class="stat-row"><span>Счет</span><strong id="score">0</strong></div>
         <div class="stat-row"><span>Линии</span><strong id="lines">0</strong></div>
@@ -32,14 +58,14 @@
         <div class="stat-row"><span>Лучший результат</span><strong id="best">0</strong></div>
       </section>
 
-      <section class="card">
+      <section class="card next-card">
         <h2>Следующая фигура</h2>
         <div class="next-piece-wrap">
           <canvas id="nextPiece" width="120" height="120"></canvas>
         </div>
       </section>
 
-      <section class="card">
+      <section class="card help-card">
         <h2>Управление</h2>
         <div class="controls">
           <div><kbd>←</kbd><kbd>→</kbd> перемещение</div>

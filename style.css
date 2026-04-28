@@ -315,6 +315,76 @@ kbd {
   position: relative;
 }
 
+.mobile-hud {
+  display: none;
+}
+
+.mobile-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.mini-stat {
+  padding: 8px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 246, 255, 0.2);
+  background: rgba(0, 246, 255, 0.05);
+}
+
+.mini-stat span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.mini-stat strong {
+  color: #fff;
+  font-size: 1rem;
+  text-shadow: 0 0 12px rgba(0, 246, 255, 0.25);
+}
+
+.mobile-hud-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: stretch;
+  margin-top: 8px;
+}
+
+.mobile-next-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 246, 255, 0.2);
+  background: rgba(0, 246, 255, 0.05);
+}
+
+.mobile-next-label {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+#nextPieceMobile {
+  display: block;
+  width: 72px;
+  height: 72px;
+}
+
+.mobile-pause-btn {
+  width: 56px;
+  min-width: 56px;
+  border: 1px solid rgba(0, 246, 255, 0.3);
+  border-radius: 14px;
+  background: rgba(0, 246, 255, 0.08);
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+}
+
 .toggle-mobile-controls-btn {
   position: absolute;
   top: 10px;
@@ -373,7 +443,7 @@ kbd {
   body {
     overflow-x: hidden;
     overflow-y: auto;
-    padding-bottom: 110px;
+    padding-bottom: 130px;
   }
 
   .app {
@@ -385,6 +455,27 @@ kbd {
   .game-panel {
     height: auto;
     padding: 10px;
+  }
+
+  .panel-header h1 {
+    display: none;
+  }
+
+  .panel-header {
+    margin-bottom: 8px;
+    justify-content: flex-end;
+  }
+
+  .mobile-hud {
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  .stats-card,
+  .next-card,
+  .help-card,
+  .note {
+    display: none;
   }
 
   .sidebar {
@@ -402,64 +493,46 @@ kbd {
     padding: 10px;
   }
 
-  .card h2 {
-    margin-bottom: 8px;
-    font-size: 0.9rem;
-  }
-
   .stat-row {
     padding: 6px 0;
   }
 
-  .controls {
-    display: none;
-  }
-
   .mobile-controls {
-  display: block;
-  position: fixed;
-  left: 10px;
-  right: 10px;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
-  z-index: 1000;
-  margin: 0;
-  padding: 12px 10px 10px;
-  border-radius: 18px;
-  background: rgba(8, 12, 30, 0.92);
-  border: 1px solid rgba(0, 255, 255, 0.24);
-  backdrop-filter: blur(14px);
-  box-shadow: var(--shadow-cyan), var(--shadow-pink);
-}
+    display: block;
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+    z-index: 1000;
+    margin: 0;
+    padding: 12px 10px 10px;
+    border-radius: 18px;
+    background: rgba(8, 12, 30, 0.92);
+    border: 1px solid rgba(0, 255, 255, 0.24);
+    backdrop-filter: blur(14px);
+    box-shadow: var(--shadow-cyan), var(--shadow-pink);
+  }
 
   .mobile-controls h2 {
-  margin: 0 0 12px;
-  padding-right: 48px;
-  font-size: 0.9rem;
-}
+    margin: 0 0 12px;
+    padding-right: 48px;
+    font-size: 0.95rem;
+  }
 
   .touch-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-  }
+  grid-template-columns: repeat(3, 80px);
+  gap: 14px;
+}
 
   .touch-grid button {
-    min-height: 48px;
-    padding: 10px;
-    font-size: 18px;
-    border-radius: 10px;
-    border: 1px solid rgba(0, 246, 255, 0.3);
-    background: rgba(0, 246, 255, 0.08);
-    color: white;
-    touch-action: manipulation;
-  }
+  width: 80px;
+  min-height: 80px;
+  font-size: 28px;
+}
 
   #dropBtn {
     grid-column: span 2;
-  }
-
-  .note {
-    margin-bottom: 6px;
+    width: auto;
   }
 }
 
