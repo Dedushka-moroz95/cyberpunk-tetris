@@ -22,21 +22,6 @@ const restartBtn = document.getElementById("restartBtn");
 const pauseBtn = document.getElementById("pauseBtn");
 const clearBestBtn = document.getElementById("clearBestBtn");
 
-const mobileControls = document.getElementById("mobileControls");
-const toggleMobileControlsBtn = document.getElementById("toggleMobileControlsBtn");
-
-if (mobileControls && toggleMobileControlsBtn) {
-  toggleMobileControlsBtn.addEventListener("click", () => {
-    const isCollapsed = mobileControls.classList.toggle("is-collapsed");
-
-    toggleMobileControlsBtn.textContent = isCollapsed ? "⌃" : "—";
-    toggleMobileControlsBtn.setAttribute(
-      "aria-label",
-      isCollapsed ? "Развернуть управление" : "Свернуть управление"
-    );
-  });
-}
-
 const COLS = 10;
 const ROWS = 20;
 const BLOCK = canvas.width / COLS;
@@ -108,6 +93,13 @@ let clearingRows = [];
 let clearAnimationStart = 0;
 let isClearing = false;
 const CLEAR_ANIMATION_DURATION = 180;
+
+let touchStartX = 0;
+let touchStartY = 0;
+let touchEndX = 0;
+let touchEndY = 0;
+
+const SWIPE_THRESHOLD = 20; // чувствительность
 
 bestEl.textContent = best;
 
@@ -310,7 +302,7 @@ function drawBoard() {
   drawClearingRows();
 
   if (!gameStarted) {
-    drawOverlay("ТАП — СТАРТ\nТАП — ПАУЗА");
+    drawOverlay("ТАП ДЛЯ СТАРТА");
   } else if (isPaused || isGameOver) {
     drawOverlay(isGameOver ? "ПРОИГРЫШ" : "ПАУЗА");
   }
@@ -547,28 +539,6 @@ function togglePause() {
   updateUI();
 }
 
-function handleCanvasTap(event) {
-  event.preventDefault();
-
-  if (event.pointerType && event.pointerType === "mouse" && event.button !== 0) {
-    return;
-  }
-
-  if (!gameStarted) {
-    resetGame();
-    return;
-  }
-
-  if (isGameOver) {
-    resetGame();
-    return;
-  }
-
-  if (isClearing) return;
-
-  togglePause();
-}
-
 function update(time = 0) {
   const deltaTime = time - lastTime;
   lastTime = time;
@@ -642,53 +612,64 @@ if (mobilePauseBtn) {
   });
 }
 
-canvas.addEventListener("pointerdown", handleCanvasTap);
+canvas.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+
+  touchStartX = e.clientX;
+  touchStartY = e.clientY;
+});
+
+canvas.addEventListener("pointerup", (e) => {
+  e.preventDefault();
+
+  touchEndX = e.clientX;
+  touchEndY = e.clientY;
+
+  handleGesture();
+});
 
 drawBoard();
 animationId = requestAnimationFrame(update);
 
-// УПРАВЛЕНИЕ кнопками
-const leftBtn = document.getElementById("leftBtn");
-const rightBtn = document.getElementById("rightBtn");
-const downBtn = document.getElementById("downBtn");
-const rotateBtn = document.getElementById("rotateBtn");
-const dropBtn = document.getElementById("dropBtn");
+function handleGesture() {
+  const dx = touchEndX - touchStartX;
+  const dy = touchEndY - touchStartY;
 
-function bindTouchButton(button, action) {
-  if (!button) return;
+  // старт игры
+  if (!gameStarted) {
+    resetGame();
+    return;
+  }
 
-  let interval = null;
+  if (isGameOver) {
+    resetGame();
+    return;
+  }
 
-  button.addEventListener("pointerdown", (event) => {
-    event.preventDefault();
+  if (isClearing) return;
 
-    if (isPaused || isGameOver || isClearing) return;
+  // если почти нет движения → тап
+  if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+    // короткий тап — ничего
+    return;
+  }
 
-    action(); // первый шаг сразу
-
-    interval = setInterval(action, 120); // удержание
-  });
-
-  const stop = () => {
-    if (interval) {
-      clearInterval(interval);
-      interval = null;
+  // горизонталь сильнее → влево/вправо
+  if (Math.abs(dx) > Math.abs(dy)) {
+    if (dx > SWIPE_THRESHOLD && !isPaused) {
+      playerMove(1);
+    } else if (dx < -SWIPE_THRESHOLD && !isPaused) {
+      playerMove(-1);
     }
-  };
-
-  button.addEventListener("pointerup", stop);
-  button.addEventListener("pointerleave", stop);
-  button.addEventListener("pointercancel", stop);
-}
-
-bindTouchButton(leftBtn, () => playerMove(-1));
-bindTouchButton(rightBtn, () => playerMove(1));
-bindTouchButton(downBtn, () => playerDrop());
-bindTouchButton(rotateBtn, () => playerRotate());
-if (dropBtn) {
-  dropBtn.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    if (isPaused || isGameOver || isClearing) return;
-    hardDrop();
-  });
+  } 
+  
+  else {
+    if (dy > SWIPE_THRESHOLD * 2) {
+      hardDrop();
+    } else if (dy > SWIPE_THRESHOLD) {
+      playerDrop();
+    } else if (dy < -SWIPE_THRESHOLD) {
+      playerRotate();
+    }
+  }
 }
