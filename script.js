@@ -1,11 +1,20 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-const nextCanvas = document.getElementById("nextPiece");
-const nextCtx = nextCanvas.getContext("2d");
-
-const nextCanvasMobile = document.getElementById("nextPieceMobile");
-const nextCtxMobile = nextCanvasMobile ? nextCanvasMobile.getContext("2d") : null;
+const nextPreviews = Array.from(document.querySelectorAll("[data-next-index]"))
+  .map((canvas) => ({
+    canvas,
+    ctx: canvas.getContext("2d"),
+    index: Number(canvas.dataset.nextIndex || 0),
+    blockSize: Number(canvas.dataset.previewBlockSize || 18),
+  }))
+  .sort((a, b) => a.index - b.index);
+const holdPreviews = Array.from(document.querySelectorAll("[data-hold-preview]"))
+  .map((canvas) => ({
+    canvas,
+    ctx: canvas.getContext("2d"),
+    blockSize: Number(canvas.dataset.previewBlockSize || 18),
+  }));
 
 const scoreMobileEl = document.getElementById("scoreMobile");
 const linesMobileEl = document.getElementById("linesMobile");
@@ -29,6 +38,7 @@ const BLOCK = 30;
 const BOARD_WIDTH = COLS * BLOCK;
 const BOARD_HEIGHT = ROWS * BLOCK;
 const MAX_PIXEL_RATIO = 2;
+const NEXT_QUEUE_SIZE = 4;
 
 const COLORS = {
   I: "#00f6ff",
@@ -97,7 +107,9 @@ const I_WALL_KICKS = {
 
 let board = [];
 let player = null;
-let nextPiece = null;
+let nextQueue = [];
+let holdPiece = null;
+let canHold = true;
 let score = 0;
 let lines = 0;
 let level = 1;
@@ -177,13 +189,7 @@ function refillPieceBag() {
   }
 }
 
-function randomPiece() {
-  if (pieceBag.length === 0) {
-    refillPieceBag();
-  }
-
-  const type = pieceBag.pop();
-
+function createPiece(type) {
   return {
     type,
     matrix: SHAPES[type].map((row) => [...row]),
@@ -193,6 +199,31 @@ function randomPiece() {
       y: 0,
     },
   };
+}
+
+function randomPiece() {
+  if (pieceBag.length === 0) {
+    refillPieceBag();
+  }
+
+  const type = pieceBag.pop();
+
+  return createPiece(type);
+}
+
+function ensureNextQueue() {
+  while (nextQueue.length < NEXT_QUEUE_SIZE) {
+    nextQueue.push(randomPiece());
+  }
+}
+
+function takeNextPiece() {
+  ensureNextQueue();
+
+  const piece = nextQueue.shift();
+  ensureNextQueue();
+
+  return piece;
 }
 
 function updateStatus(text, state) {
@@ -228,6 +259,9 @@ function resetGame() {
   isGameOver = false;
   gameStarted = true;
   pieceBag = [];
+  nextQueue = [];
+  holdPiece = null;
+  canHold = true;
   lockCounter = 0;
   lockResetCount = 0;
 
@@ -235,7 +269,7 @@ function resetGame() {
   clearAnimationStart = 0;
   isClearing = false;
 
-  nextPiece = randomPiece();
+  ensureNextQueue();
   spawnPiece();
 
   updateStatus("В ИГРЕ", "playing");
@@ -308,51 +342,85 @@ function drawMatrix(matrix, offset, color, alpha = 1) {
   });
 }
 
-function drawNextPiece() {
-  const targets = [
-    { ctx: nextCtx, canvas: nextCanvas, blockSize: 24 },
-    { ctx: nextCtxMobile, canvas: nextCanvasMobile, blockSize: 18 },
-  ].filter((target) => target.ctx && target.canvas);
+function getMatrixBounds(matrix) {
+  let minX = matrix[0].length;
+  let minY = matrix.length;
+  let maxX = -1;
+  let maxY = -1;
 
-  targets.forEach(({ ctx, canvas, blockSize }) => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  matrix.forEach((row, y) => {
+    row.forEach((value, x) => {
+      if (!value) return;
 
-    if (!nextPiece) return;
-
-    const matrix = nextPiece.matrix;
-    const color = COLORS[nextPiece.type];
-
-    const matrixWidth = matrix[0].length * blockSize;
-    const matrixHeight = matrix.length * blockSize;
-
-    const offsetX = (canvas.width - matrixWidth) / 2;
-    const offsetY = (canvas.height - matrixHeight) / 2;
-
-    matrix.forEach((row, y) => {
-      row.forEach((value, x) => {
-        if (!value) return;
-
-        const px = offsetX + x * blockSize;
-        const py = offsetY + y * blockSize;
-
-        ctx.save();
-
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = color;
-        ctx.fillStyle = color;
-        ctx.fillRect(px, py, blockSize, blockSize);
-
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = "rgba(10, 18, 35, 0.85)";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(px, py, blockSize, blockSize);
-
-        ctx.fillStyle = "rgba(255,255,255,0.18)";
-        ctx.fillRect(px + 2, py + 2, blockSize - 4, 4);
-
-        ctx.restore();
-      });
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
     });
+  });
+
+  return { minX, minY, maxX, maxY };
+}
+
+function drawPreviewCell(ctx, x, y, size, color) {
+  ctx.save();
+
+  ctx.shadowBlur = 8;
+  ctx.shadowColor = color;
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, size, size);
+
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = "rgba(10, 18, 35, 0.85)";
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(x, y, size, size);
+
+  ctx.fillStyle = "rgba(255,255,255,0.16)";
+  ctx.fillRect(x + 2, y + 2, size - 4, 3);
+
+  ctx.restore();
+}
+
+function drawPreviewPiece(target, piece) {
+  const { ctx, canvas, blockSize } = target;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (!piece) return;
+
+  const matrix = piece.matrix;
+  const color = COLORS[piece.type];
+  const bounds = getMatrixBounds(matrix);
+
+  if (bounds.maxX < bounds.minX || bounds.maxY < bounds.minY) return;
+
+  const matrixWidth = (bounds.maxX - bounds.minX + 1) * blockSize;
+  const matrixHeight = (bounds.maxY - bounds.minY + 1) * blockSize;
+  const offsetX = (canvas.width - matrixWidth) / 2;
+  const offsetY = (canvas.height - matrixHeight) / 2;
+
+  matrix.forEach((row, y) => {
+    row.forEach((value, x) => {
+      if (!value) return;
+
+      drawPreviewCell(
+        ctx,
+        offsetX + (x - bounds.minX) * blockSize,
+        offsetY + (y - bounds.minY) * blockSize,
+        blockSize,
+        color
+      );
+    });
+  });
+}
+
+function drawPiecePreviews() {
+  nextPreviews.forEach((target) => {
+    drawPreviewPiece(target, nextQueue[target.index]);
+  });
+
+  holdPreviews.forEach((target) => {
+    drawPreviewPiece(target, holdPiece);
   });
 }
 
@@ -522,25 +590,55 @@ function resetLockState() {
   lockResetCount = 0;
 }
 
-function spawnPiece() {
-  player = {
-    type: nextPiece.type,
-    matrix: nextPiece.matrix.map((row) => [...row]),
-    rotation: nextPiece.rotation || 0,
+function createActivePiece(piece) {
+  return {
+    type: piece.type,
+    matrix: SHAPES[piece.type].map((row) => [...row]),
+    rotation: 0,
     pos: {
-      x: Math.floor(COLS / 2) - Math.ceil(nextPiece.matrix[0].length / 2),
+      x: Math.floor(COLS / 2) - Math.ceil(SHAPES[piece.type][0].length / 2),
       y: 0,
     },
   };
+}
 
+function spawnPiece() {
+  const nextPiece = takeNextPiece();
+
+  player = createActivePiece(nextPiece);
   resetLockState();
-  nextPiece = randomPiece();
-  drawNextPiece();
+  canHold = true;
+  drawPiecePreviews();
 
   if (collide()) {
     isGameOver = true;
     updateStatus("ЗАВЕРШЕНО", "gameover");
   }
+}
+
+function holdCurrentPiece() {
+  if (!canControlPiece() || !canHold) return false;
+
+  const currentPiece = createPiece(player.type);
+
+  if (holdPiece) {
+    const swappedPiece = holdPiece;
+    holdPiece = currentPiece;
+    player = createActivePiece(swappedPiece);
+    resetLockState();
+
+    if (collide()) {
+      isGameOver = true;
+      updateStatus("ЗАВЕРШЕНО", "gameover");
+    }
+  } else {
+    holdPiece = currentPiece;
+    spawnPiece();
+  }
+
+  canHold = false;
+  drawPiecePreviews();
+  return true;
 }
 
 function canControlPiece() {
@@ -772,6 +870,9 @@ function performControlAction(action) {
     case "rotate":
       playerRotate();
       break;
+    case "hold":
+      holdCurrentPiece();
+      break;
     case "hard-drop":
       hardDrop();
       break;
@@ -784,6 +885,9 @@ const KEY_ACTIONS = {
   ArrowDown: "soft-drop",
   ArrowUp: "rotate",
   Space: "hard-drop",
+  KeyC: "hold",
+  ShiftLeft: "hold",
+  ShiftRight: "hold",
   KeyP: "pause",
   Enter: "start",
 };
