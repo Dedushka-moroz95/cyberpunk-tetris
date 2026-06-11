@@ -79,6 +79,21 @@ const SHAPES = {
 };
 
 const SCORE_TABLE = [0, 100, 300, 500, 800];
+const LOCK_DELAY = 500;
+const MAX_LOCK_RESETS = 15;
+const ROTATION_STATES = 4;
+const DEFAULT_WALL_KICKS = {
+  "0>1": [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+  "1>2": [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+  "2>3": [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+  "3>0": [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+};
+const I_WALL_KICKS = {
+  "0>1": [[0, 0], [-2, 0], [1, 0], [-2, 1], [1, -2]],
+  "1>2": [[0, 0], [-1, 0], [2, 0], [-1, -2], [2, 1]],
+  "2>3": [[0, 0], [2, 0], [-1, 0], [2, -1], [-1, 2]],
+  "3>0": [[0, 0], [1, 0], [-2, 0], [1, 2], [-2, -1]],
+};
 
 let board = [];
 let player = null;
@@ -94,6 +109,8 @@ let isGameOver = false;
 let gameStarted = false;
 let animationId = null;
 let pieceBag = [];
+let lockCounter = 0;
+let lockResetCount = 0;
 let clearingRows = [];
 let clearAnimationStart = 0;
 let isClearing = false;
@@ -170,6 +187,7 @@ function randomPiece() {
   return {
     type,
     matrix: SHAPES[type].map((row) => [...row]),
+    rotation: 0,
     pos: {
       x: Math.floor(COLS / 2) - Math.ceil(SHAPES[type][0].length / 2),
       y: 0,
@@ -210,6 +228,8 @@ function resetGame() {
   isGameOver = false;
   gameStarted = true;
   pieceBag = [];
+  lockCounter = 0;
+  lockResetCount = 0;
 
   clearingRows = [];
   clearAnimationStart = 0;
@@ -497,16 +517,23 @@ function finishLineClear() {
   updateUI();
 }
 
+function resetLockState() {
+  lockCounter = 0;
+  lockResetCount = 0;
+}
+
 function spawnPiece() {
   player = {
     type: nextPiece.type,
     matrix: nextPiece.matrix.map((row) => [...row]),
+    rotation: nextPiece.rotation || 0,
     pos: {
       x: Math.floor(COLS / 2) - Math.ceil(nextPiece.matrix[0].length / 2),
       y: 0,
     },
   };
 
+  resetLockState();
   nextPiece = randomPiece();
   drawNextPiece();
 
@@ -520,25 +547,62 @@ function canControlPiece() {
   return gameStarted && !isPaused && !isGameOver && !isClearing && player;
 }
 
-function playerDrop(scoreDrop = false) {
+function isPieceGrounded() {
+  return Boolean(
+    player &&
+      collide(player.matrix, { x: player.pos.x, y: player.pos.y + 1 })
+  );
+}
+
+function resetLockDelayAfterMove() {
   if (!player) return;
+
+  if (isPieceGrounded()) {
+    if (lockResetCount < MAX_LOCK_RESETS) {
+      lockCounter = 0;
+      lockResetCount++;
+    }
+    return;
+  }
+
+  lockCounter = 0;
+}
+
+function lockPiece() {
+  if (!player || isClearing || isGameOver) return;
+
+  merge();
+
+  const hasLinesToClear = clearLines();
+
+  if (hasLinesToClear) {
+    player = null;
+  } else {
+    spawnPiece();
+  }
+
+  dropCounter = 0;
+}
+
+function playerDrop(scoreDrop = false) {
+  if (!player) return false;
+
+  if (collide(player.matrix, { x: player.pos.x, y: player.pos.y + 1 })) {
+    return false;
+  }
 
   player.pos.y++;
 
-  if (collide()) {
-    player.pos.y--;
-    merge();
-
-    const hasLinesToClear = clearLines();
-
-    if (!hasLinesToClear) {
-      spawnPiece();
-    }
-  } else if (scoreDrop) {
+  if (scoreDrop) {
     addScore(1);
   }
 
   dropCounter = 0;
+  if (!isPieceGrounded()) {
+    lockCounter = 0;
+  }
+
+  return true;
 }
 
 function hardDrop() {
@@ -555,41 +619,64 @@ function hardDrop() {
     addScore(dropped * 2);
   }
 
-  playerDrop();
+  lockPiece();
 }
 
 function playerMove(direction) {
-  if (!player) return;
+  if (!player) return false;
 
   player.pos.x += direction;
   if (collide()) {
     player.pos.x -= direction;
+    return false;
   }
+
+  resetLockDelayAfterMove();
+  return true;
 }
 
 function rotate(matrix) {
   return matrix[0].map((_, index) => matrix.map((row) => row[index]).reverse());
 }
 
+function getWallKicks(type, fromRotation, toRotation) {
+  if (type === "O") return [[0, 0]];
+
+  const key = `${fromRotation}>${toRotation}`;
+  const kicks = type === "I" ? I_WALL_KICKS : DEFAULT_WALL_KICKS;
+
+  return kicks[key] || [[0, 0]];
+}
+
 function playerRotate() {
-  if (!player) return;
+  if (!player) return false;
 
   const originalMatrix = player.matrix.map((row) => [...row]);
-  const originalX = player.pos.x;
+  const originalPos = { ...player.pos };
+  const originalRotation = player.rotation;
+  const nextRotation = (player.rotation + 1) % ROTATION_STATES;
+  const rotatedMatrix = rotate(player.matrix);
 
-  player.matrix = rotate(player.matrix);
+  for (const [offsetX, offsetY] of getWallKicks(
+    player.type,
+    originalRotation,
+    nextRotation
+  )) {
+    player.matrix = rotatedMatrix;
+    player.pos.x = originalPos.x + offsetX;
+    player.pos.y = originalPos.y + offsetY;
 
-  let offset = 1;
-  while (collide()) {
-    player.pos.x += offset;
-    offset = -(offset + (offset > 0 ? 1 : -1));
-
-    if (Math.abs(offset) > player.matrix[0].length) {
-      player.matrix = originalMatrix;
-      player.pos.x = originalX;
-      return;
+    if (!collide()) {
+      player.rotation = nextRotation;
+      resetLockDelayAfterMove();
+      return true;
     }
   }
+
+  player.matrix = originalMatrix;
+  player.pos = originalPos;
+  player.rotation = originalRotation;
+  return false;
 }
 
 function getDropInterval() {
@@ -633,10 +720,20 @@ function update(time = 0) {
       spawnPiece();
     }
   } else if (!isPaused && !isGameOver) {
-    dropCounter += deltaTime;
+    if (isPieceGrounded()) {
+      lockCounter += deltaTime;
+      dropCounter = 0;
 
-    if (dropCounter > getDropInterval()) {
-      playerDrop();
+      if (lockCounter >= LOCK_DELAY) {
+        lockPiece();
+      }
+    } else {
+      lockCounter = 0;
+      dropCounter += deltaTime;
+
+      if (dropCounter > getDropInterval()) {
+        playerDrop();
+      }
     }
   }
 
