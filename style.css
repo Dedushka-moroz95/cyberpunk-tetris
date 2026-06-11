@@ -453,6 +453,102 @@ kbd {
   border-color: rgba(0, 255, 163, 0.32);
 }
 
+.game-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(2, 6, 20, 0.58);
+  backdrop-filter: blur(8px);
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.18s ease, visibility 0.18s ease;
+}
+
+.game-overlay.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.overlay-panel {
+  width: min(360px, 100%);
+  padding: 18px;
+  border: 1px solid rgba(0, 246, 255, 0.26);
+  border-radius: 14px;
+  background: rgba(5, 10, 28, 0.92);
+  box-shadow: 0 0 24px rgba(0, 246, 255, 0.18);
+}
+
+.overlay-kicker {
+  margin: 0 0 8px;
+  color: var(--cyan);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.overlay-panel h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.45rem;
+  line-height: 1.1;
+}
+
+.overlay-panel p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+  font-size: 0.94rem;
+}
+
+.overlay-scoreboard {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.overlay-scoreboard div {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid rgba(0, 246, 255, 0.16);
+  border-radius: 10px;
+  background: rgba(0, 246, 255, 0.05);
+}
+
+.overlay-scoreboard span,
+.overlay-scoreboard strong {
+  display: block;
+}
+
+.overlay-scoreboard span {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.overlay-scoreboard strong {
+  margin-top: 4px;
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.overlay-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.overlay-actions .btn {
+  flex: 1;
+}
+
+.overlay-actions .is-hidden {
+  display: none;
+}
+
 @media (max-width: 900px) {
   body {
     overflow-x: hidden;
@@ -522,6 +618,23 @@ kbd {
     width: min(100%, 390px);
     grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 8px;
+  }
+
+  .game-overlay {
+    padding: 10px;
+  }
+
+  .overlay-panel {
+    width: min(100%, 340px);
+    padding: 14px;
+  }
+
+  .overlay-panel h2 {
+    font-size: 1.2rem;
+  }
+
+  .overlay-scoreboard {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .card {

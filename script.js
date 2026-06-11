@@ -21,6 +21,16 @@ const linesMobileEl = document.getElementById("linesMobile");
 const levelMobileEl = document.getElementById("levelMobile");
 const mobilePauseBtn = document.getElementById("mobilePauseBtn");
 const touchButtons = document.querySelectorAll("[data-action]");
+const gameOverlayEl = document.getElementById("gameOverlay");
+const overlayKickerEl = document.getElementById("overlayKicker");
+const overlayTitleEl = document.getElementById("overlayTitle");
+const overlayMessageEl = document.getElementById("overlayMessage");
+const overlayScoreEl = document.getElementById("overlayScore");
+const overlayLinesEl = document.getElementById("overlayLines");
+const overlayLevelEl = document.getElementById("overlayLevel");
+const overlayBestEl = document.getElementById("overlayBest");
+const overlayPrimaryBtn = document.getElementById("overlayPrimaryBtn");
+const overlayRestartBtn = document.getElementById("overlayRestartBtn");
 
 const scoreEl = document.getElementById("score");
 const linesEl = document.getElementById("lines");
@@ -229,6 +239,47 @@ function takeNextPiece() {
 function updateStatus(text, state) {
   statusEl.textContent = text;
   statusEl.className = "status " + state;
+  updateOverlay();
+}
+
+function updateOverlay() {
+  if (!gameOverlayEl) return;
+
+  const shouldShow = !gameStarted || isPaused || isGameOver;
+
+  gameOverlayEl.classList.toggle("is-hidden", !shouldShow);
+  gameOverlayEl.setAttribute("aria-hidden", String(!shouldShow));
+
+  if (overlayScoreEl) overlayScoreEl.textContent = score;
+  if (overlayLinesEl) overlayLinesEl.textContent = lines;
+  if (overlayLevelEl) overlayLevelEl.textContent = level;
+  if (overlayBestEl) overlayBestEl.textContent = best;
+
+  if (!shouldShow) return;
+
+  overlayRestartBtn.classList.add("is-hidden");
+
+  if (!gameStarted) {
+    overlayKickerEl.textContent = "CYBERPUNK TETRIS";
+    overlayTitleEl.textContent = "Готов к запуску";
+    overlayMessageEl.textContent = "Поле свободно. Можно начинать.";
+    overlayPrimaryBtn.textContent = "Начать игру";
+    return;
+  }
+
+  if (isGameOver) {
+    overlayKickerEl.textContent = "СЕАНС ЗАВЕРШЕН";
+    overlayTitleEl.textContent = "Игра окончена";
+    overlayMessageEl.textContent = "Финальная статистика ниже.";
+    overlayPrimaryBtn.textContent = "Играть снова";
+    return;
+  }
+
+  overlayKickerEl.textContent = "ПАУЗА";
+  overlayTitleEl.textContent = "Раунд остановлен";
+  overlayMessageEl.textContent = "Продолжишь с того же места.";
+  overlayPrimaryBtn.textContent = "Продолжить";
+  overlayRestartBtn.classList.remove("is-hidden");
 }
 
 function updateUI() {
@@ -246,6 +297,8 @@ function updateUI() {
   if (mobilePauseBtn) {
     mobilePauseBtn.textContent = isPaused ? "▶" : "⏸";
   }
+
+  updateOverlay();
 }
 
 function resetGame() {
@@ -450,12 +503,6 @@ function drawBoard() {
   }
 
   drawClearingRows();
-
-  if (!gameStarted) {
-    drawOverlay("ТАП ДЛЯ СТАРТА");
-  } else if (isPaused || isGameOver) {
-    drawOverlay(isGameOver ? "ПРОИГРЫШ" : "ПАУЗА");
-  }
 }
 
 function drawClearingRows() {
@@ -491,21 +538,6 @@ function drawClearingRows() {
       ctx.restore();
     }
   });
-}
-
-function drawOverlay(text) {
-  ctx.save();
-  ctx.fillStyle = "rgba(2, 6, 20, 0.55)";
-  ctx.fillRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
-
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.font = "bold 30px Arial";
-  ctx.fillStyle = "#ffffff";
-  ctx.shadowBlur = 20;
-  ctx.shadowColor = "#ff2bd6";
-  ctx.fillText(text, BOARD_WIDTH / 2, BOARD_HEIGHT / 2);
-  ctx.restore();
 }
 
 function collide(matrix = player.matrix, pos = player.pos) {
@@ -841,6 +873,11 @@ function update(time = 0) {
 
 function performControlAction(action) {
   if (action === "start") {
+    if (isPaused && gameStarted && !isGameOver) {
+      togglePause();
+      return;
+    }
+
     if (!gameStarted || isGameOver) resetGame();
     return;
   }
@@ -908,6 +945,21 @@ clearBestBtn.addEventListener("click", () => {
   localStorage.removeItem("cyberpunk-tetris-best");
   updateUI();
 });
+
+if (overlayPrimaryBtn) {
+  overlayPrimaryBtn.addEventListener("click", () => {
+    if (isPaused && gameStarted && !isGameOver) {
+      togglePause();
+      return;
+    }
+
+    resetGame();
+  });
+}
+
+if (overlayRestartBtn) {
+  overlayRestartBtn.addEventListener("click", resetGame);
+}
 
 if (mobilePauseBtn) {
   mobilePauseBtn.addEventListener("click", () => {
@@ -985,6 +1037,7 @@ canvas.addEventListener("pointercancel", () => {
   activePointerId = null;
 });
 
+updateUI();
 drawBoard();
 animationId = requestAnimationFrame(update);
 

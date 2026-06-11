@@ -61,6 +61,38 @@
         <button class="touch-btn" type="button" data-action="soft-drop" aria-label="Опустить" title="Опустить">↓</button>
         <button class="touch-btn touch-btn-strong" type="button" data-action="hard-drop" aria-label="Бросить вниз" title="Бросить вниз">⇩</button>
       </section>
+
+      <section class="game-overlay" id="gameOverlay" aria-live="polite">
+        <div class="overlay-panel">
+          <p class="overlay-kicker" id="overlayKicker">CYBERPUNK TETRIS</p>
+          <h2 id="overlayTitle">Готов к запуску</h2>
+          <p id="overlayMessage">Поле свободно. Можно начинать.</p>
+
+          <div class="overlay-scoreboard" id="overlayScoreboard">
+            <div>
+              <span>Счет</span>
+              <strong id="overlayScore">0</strong>
+            </div>
+            <div>
+              <span>Линии</span>
+              <strong id="overlayLines">0</strong>
+            </div>
+            <div>
+              <span>Уровень</span>
+              <strong id="overlayLevel">1</strong>
+            </div>
+            <div>
+              <span>Лучший</span>
+              <strong id="overlayBest">0</strong>
+            </div>
+          </div>
+
+          <div class="overlay-actions">
+            <button id="overlayPrimaryBtn" class="btn btn-primary" type="button">Начать игру</button>
+            <button id="overlayRestartBtn" class="btn btn-secondary" type="button">Заново</button>
+          </div>
+        </div>
+      </section>
     </section>
 
     <aside class="sidebar">
