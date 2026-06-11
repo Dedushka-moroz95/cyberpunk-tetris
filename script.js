@@ -11,6 +11,7 @@ const scoreMobileEl = document.getElementById("scoreMobile");
 const linesMobileEl = document.getElementById("linesMobile");
 const levelMobileEl = document.getElementById("levelMobile");
 const mobilePauseBtn = document.getElementById("mobilePauseBtn");
+const touchButtons = document.querySelectorAll("[data-action]");
 
 const scoreEl = document.getElementById("score");
 const linesEl = document.getElementById("lines");
@@ -24,7 +25,10 @@ const clearBestBtn = document.getElementById("clearBestBtn");
 
 const COLS = 10;
 const ROWS = 20;
-const BLOCK = canvas.width / COLS;
+const BLOCK = 30;
+const BOARD_WIDTH = COLS * BLOCK;
+const BOARD_HEIGHT = ROWS * BLOCK;
+const MAX_PIXEL_RATIO = 2;
 
 const COLORS = {
   I: "#00f6ff",
@@ -89,6 +93,7 @@ let isPaused = false;
 let isGameOver = false;
 let gameStarted = false;
 let animationId = null;
+let pieceBag = [];
 let clearingRows = [];
 let clearAnimationStart = 0;
 let isClearing = false;
@@ -98,18 +103,69 @@ let touchStartX = 0;
 let touchStartY = 0;
 let touchEndX = 0;
 let touchEndY = 0;
+let activePointerId = null;
+let repeatDelayId = null;
+let repeatIntervalId = null;
 
-const SWIPE_THRESHOLD = 20; // чувствительность
+const TAP_THRESHOLD = 10;
+const SWIPE_THRESHOLD = 28;
+const HARD_DROP_SWIPE_THRESHOLD = 110;
+const REPEAT_DELAY = 170;
+const REPEAT_INTERVAL = 65;
 
 bestEl.textContent = best;
+setupCanvasScale();
+window.addEventListener("resize", setupCanvasScale);
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => Array(COLS).fill(0));
 }
 
+function setupCanvasScale() {
+  const pixelRatio = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
+  const width = Math.floor(BOARD_WIDTH * pixelRatio);
+  const height = Math.floor(BOARD_HEIGHT * pixelRatio);
+
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+
+  canvas.style.aspectRatio = `${COLS} / ${ROWS}`;
+  ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+}
+
+function saveBestScore() {
+  if (score > best) {
+    best = score;
+    localStorage.setItem("cyberpunk-tetris-best", String(best));
+  }
+}
+
+function addScore(points) {
+  if (!points) return;
+
+  score += points;
+  saveBestScore();
+  updateUI();
+}
+
+function refillPieceBag() {
+  pieceBag = Object.keys(SHAPES);
+
+  for (let i = pieceBag.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pieceBag[i], pieceBag[j]] = [pieceBag[j], pieceBag[i]];
+  }
+}
+
 function randomPiece() {
-  const types = Object.keys(SHAPES);
-  const type = types[Math.floor(Math.random() * types.length)];
+  if (pieceBag.length === 0) {
+    refillPieceBag();
+  }
+
+  const type = pieceBag.pop();
 
   return {
     type,
@@ -153,6 +209,7 @@ function resetGame() {
   isPaused = false;
   isGameOver = false;
   gameStarted = true;
+  pieceBag = [];
 
   clearingRows = [];
   clearAnimationStart = 0;
@@ -174,22 +231,27 @@ function resetGame() {
 function drawCell(x, y, color, alpha = 1) {
   const px = x * BLOCK;
   const py = y * BLOCK;
+  const inset = alpha < 1 ? 4 : 2;
+  const size = BLOCK - inset * 2;
 
   ctx.save();
   ctx.globalAlpha = alpha;
 
-  ctx.shadowBlur = 16;
+  ctx.shadowBlur = alpha < 1 ? 8 : 10;
   ctx.shadowColor = color;
   ctx.fillStyle = color;
-  ctx.fillRect(px, py, BLOCK, BLOCK);
+  ctx.fillRect(px + inset, py + inset, size, size);
 
   ctx.shadowBlur = 0;
-  ctx.strokeStyle = "rgba(10, 18, 35, 0.85)";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(px, py, BLOCK, BLOCK);
+  ctx.strokeStyle = "rgba(5, 12, 28, 0.88)";
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(px + inset, py + inset, size, size);
 
-  ctx.fillStyle = "rgba(255,255,255,0.18)";
-  ctx.fillRect(px + 3, py + 3, BLOCK - 6, 5);
+  ctx.fillStyle = "rgba(255,255,255,0.16)";
+  ctx.fillRect(px + inset + 3, py + inset + 3, size - 6, 4);
+
+  ctx.fillStyle = "rgba(0,0,0,0.16)";
+  ctx.fillRect(px + inset + 3, py + inset + size - 6, size - 6, 3);
 
   ctx.restore();
 }
@@ -202,14 +264,14 @@ function drawGrid() {
   for (let x = 0; x <= COLS; x++) {
     ctx.beginPath();
     ctx.moveTo(x * BLOCK, 0);
-    ctx.lineTo(x * BLOCK, canvas.height);
+    ctx.lineTo(x * BLOCK, BOARD_HEIGHT);
     ctx.stroke();
   }
 
   for (let y = 0; y <= ROWS; y++) {
     ctx.beginPath();
     ctx.moveTo(0, y * BLOCK);
-    ctx.lineTo(canvas.width, y * BLOCK);
+    ctx.lineTo(BOARD_WIDTH, y * BLOCK);
     ctx.stroke();
   }
 
@@ -282,7 +344,7 @@ function drawGhost() {
 }
 
 function drawBoard() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
 
   board.forEach((row, y) => {
     row.forEach((cell, x) => {
@@ -346,7 +408,7 @@ function drawClearingRows() {
 function drawOverlay(text) {
   ctx.save();
   ctx.fillStyle = "rgba(2, 6, 20, 0.55)";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -354,7 +416,7 @@ function drawOverlay(text) {
   ctx.fillStyle = "#ffffff";
   ctx.shadowBlur = 20;
   ctx.shadowColor = "#ff2bd6";
-  ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+  ctx.fillText(text, BOARD_WIDTH / 2, BOARD_HEIGHT / 2);
   ctx.restore();
 }
 
@@ -419,22 +481,16 @@ function clearLines() {
 
 function finishLineClear() {
   const cleared = clearingRows.length;
+  const rowsToClear = new Set(clearingRows);
+  const remainingRows = board.filter((_, rowIndex) => !rowsToClear.has(rowIndex));
+  const emptyRows = Array.from({ length: cleared }, () => Array(COLS).fill(0));
 
-  clearingRows
-    .sort((a, b) => b - a)
-    .forEach((rowIndex) => {
-      const row = board.splice(rowIndex, 1)[0].fill(0);
-      board.unshift(row);
-    });
+  board = [...emptyRows, ...remainingRows];
 
+  const lineScore = SCORE_TABLE[cleared] * level;
   lines += cleared;
-  score += SCORE_TABLE[cleared] * level;
   level = Math.floor(lines / 10) + 1;
-
-  if (score > best) {
-    best = score;
-    localStorage.setItem("cyberpunk-tetris-best", String(best));
-  }
+  addScore(lineScore);
 
   clearingRows = [];
   isClearing = false;
@@ -460,7 +516,13 @@ function spawnPiece() {
   }
 }
 
-function playerDrop() {
+function canControlPiece() {
+  return gameStarted && !isPaused && !isGameOver && !isClearing && player;
+}
+
+function playerDrop(scoreDrop = false) {
+  if (!player) return;
+
   player.pos.y++;
 
   if (collide()) {
@@ -472,19 +534,33 @@ function playerDrop() {
     if (!hasLinesToClear) {
       spawnPiece();
     }
+  } else if (scoreDrop) {
+    addScore(1);
   }
 
   dropCounter = 0;
 }
 
 function hardDrop() {
+  if (!player) return;
+
+  let dropped = 0;
+
   while (!collide(player.matrix, { x: player.pos.x, y: player.pos.y + 1 })) {
     player.pos.y++;
+    dropped++;
   }
+
+  if (dropped > 0) {
+    addScore(dropped * 2);
+  }
+
   playerDrop();
 }
 
 function playerMove(direction) {
+  if (!player) return;
+
   player.pos.x += direction;
   if (collide()) {
     player.pos.x -= direction;
@@ -496,6 +572,8 @@ function rotate(matrix) {
 }
 
 function playerRotate() {
+  if (!player) return;
+
   const originalMatrix = player.matrix.map((row) => [...row]);
   const originalX = player.pos.x;
 
@@ -529,7 +607,7 @@ function getGhostY() {
 }
 
 function togglePause() {
-  if (isGameOver) return;
+  if (!gameStarted || isGameOver || isClearing) return;
 
   isPaused = !isPaused;
   updateStatus(
@@ -566,39 +644,64 @@ function update(time = 0) {
   animationId = requestAnimationFrame(update);
 }
 
-document.addEventListener("keydown", (event) => {
-  if (!gameStarted && event.code !== "Enter") return;
-  if (isGameOver && event.code !== "Enter") return;
-  if (isClearing) return;
+function performControlAction(action) {
+  if (action === "start") {
+    if (!gameStarted || isGameOver) resetGame();
+    return;
+  }
 
-  switch (event.code) {
-    case "ArrowLeft":
-      if (!isPaused) playerMove(-1);
+  if (!gameStarted || isGameOver) {
+    if (action !== "pause") resetGame();
+    return;
+  }
+
+  if (action === "pause") {
+    togglePause();
+    return;
+  }
+
+  if (!canControlPiece()) return;
+
+  switch (action) {
+    case "left":
+      playerMove(-1);
       break;
-    case "ArrowRight":
-      if (!isPaused) playerMove(1);
+    case "right":
+      playerMove(1);
       break;
-    case "ArrowDown":
-      if (!isPaused) playerDrop();
+    case "soft-drop":
+      playerDrop(true);
       break;
-    case "ArrowUp":
-      if (!isPaused) playerRotate();
+    case "rotate":
+      playerRotate();
       break;
-    case "Space":
-      event.preventDefault();
-      if (!isPaused) hardDrop();
-      break;
-    case "KeyP":
-      togglePause();
-      break;
-    case "Enter":
-      if (isGameOver) resetGame();
+    case "hard-drop":
+      hardDrop();
       break;
   }
+}
+
+const KEY_ACTIONS = {
+  ArrowLeft: "left",
+  ArrowRight: "right",
+  ArrowDown: "soft-drop",
+  ArrowUp: "rotate",
+  Space: "hard-drop",
+  KeyP: "pause",
+  Enter: "start",
+};
+
+document.addEventListener("keydown", (event) => {
+  const action = KEY_ACTIONS[event.code];
+
+  if (!action) return;
+
+  event.preventDefault();
+  performControlAction(action);
 });
 
 restartBtn.addEventListener("click", resetGame);
-pauseBtn.addEventListener("click", togglePause);
+pauseBtn.addEventListener("click", () => performControlAction("pause"));
 clearBestBtn.addEventListener("click", () => {
   best = 0;
   localStorage.removeItem("cyberpunk-tetris-best");
@@ -607,25 +710,78 @@ clearBestBtn.addEventListener("click", () => {
 
 if (mobilePauseBtn) {
   mobilePauseBtn.addEventListener("click", () => {
-    if (!gameStarted || isGameOver || isClearing) return;
-    togglePause();
+    performControlAction("pause");
   });
 }
+
+function isRepeatableAction(action) {
+  return action === "left" || action === "right" || action === "soft-drop";
+}
+
+function stopRepeatingAction() {
+  window.clearTimeout(repeatDelayId);
+  window.clearInterval(repeatIntervalId);
+  repeatDelayId = null;
+  repeatIntervalId = null;
+}
+
+function startRepeatingAction(action) {
+  const shouldRepeat = isRepeatableAction(action) && canControlPiece();
+
+  stopRepeatingAction();
+  performControlAction(action);
+
+  if (!shouldRepeat) return;
+
+  repeatDelayId = window.setTimeout(() => {
+    repeatIntervalId = window.setInterval(() => {
+      performControlAction(action);
+    }, REPEAT_INTERVAL);
+  }, REPEAT_DELAY);
+}
+
+touchButtons.forEach((button) => {
+  button.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    button.setPointerCapture?.(event.pointerId);
+    startRepeatingAction(button.dataset.action);
+  });
+
+  button.addEventListener("pointerup", (event) => {
+    event.preventDefault();
+    stopRepeatingAction();
+  });
+
+  button.addEventListener("pointercancel", stopRepeatingAction);
+  button.addEventListener("lostpointercapture", stopRepeatingAction);
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+  });
+});
 
 canvas.addEventListener("pointerdown", (e) => {
   e.preventDefault();
 
+  activePointerId = e.pointerId;
+  canvas.setPointerCapture?.(e.pointerId);
   touchStartX = e.clientX;
   touchStartY = e.clientY;
 });
 
 canvas.addEventListener("pointerup", (e) => {
+  if (activePointerId !== null && e.pointerId !== activePointerId) return;
+
   e.preventDefault();
 
   touchEndX = e.clientX;
   touchEndY = e.clientY;
+  activePointerId = null;
 
   handleGesture();
+});
+
+canvas.addEventListener("pointercancel", () => {
+  activePointerId = null;
 });
 
 drawBoard();
@@ -635,7 +791,6 @@ function handleGesture() {
   const dx = touchEndX - touchStartX;
   const dy = touchEndY - touchStartY;
 
-  // старт игры
   if (!gameStarted) {
     resetGame();
     return;
@@ -648,28 +803,26 @@ function handleGesture() {
 
   if (isClearing) return;
 
-  // если почти нет движения → тап
-  if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
-    // короткий тап — ничего
+  if (!canControlPiece()) return;
+
+  if (Math.abs(dx) < TAP_THRESHOLD && Math.abs(dy) < TAP_THRESHOLD) {
+    performControlAction("rotate");
     return;
   }
 
-  // горизонталь сильнее → влево/вправо
   if (Math.abs(dx) > Math.abs(dy)) {
-    if (dx > SWIPE_THRESHOLD && !isPaused) {
-      playerMove(1);
-    } else if (dx < -SWIPE_THRESHOLD && !isPaused) {
-      playerMove(-1);
+    if (dx > SWIPE_THRESHOLD) {
+      performControlAction("right");
+    } else if (dx < -SWIPE_THRESHOLD) {
+      performControlAction("left");
     }
-  } 
-  
-  else {
-    if (dy > SWIPE_THRESHOLD * 2) {
-      hardDrop();
+  } else {
+    if (dy > HARD_DROP_SWIPE_THRESHOLD) {
+      performControlAction("hard-drop");
     } else if (dy > SWIPE_THRESHOLD) {
-      playerDrop();
+      performControlAction("soft-drop");
     } else if (dy < -SWIPE_THRESHOLD) {
-      playerRotate();
+      performControlAction("rotate");
     }
   }
 }

@@ -5,8 +5,8 @@
 :root {
   --bg-1: #060816;
   --bg-2: #0b1026;
-  --panel: rgba(8, 12, 30, 0.72);
-  --panel-border: rgba(0, 255, 255, 0.24);
+  --panel: rgba(8, 12, 30, 0.82);
+  --panel-border: rgba(0, 246, 255, 0.18);
   --text: #e7faff;
   --muted: #8aa0c8;
   --cyan: #00f6ff;
@@ -14,8 +14,8 @@
   --violet: #8b5cf6;
   --red: #ff4d6d;
   --green: #00ffa3;
-  --shadow-cyan: 0 0 20px rgba(0, 246, 255, 0.28);
-  --shadow-pink: 0 0 24px rgba(255, 43, 214, 0.22);
+  --shadow-cyan: 0 0 18px rgba(0, 246, 255, 0.18);
+  --shadow-pink: 0 0 20px rgba(255, 43, 214, 0.14);
 }
 
 html, body {
@@ -33,6 +33,7 @@ html, body {
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   justify-content: center;
   overflow-x: hidden;
@@ -57,6 +58,7 @@ body {
 .app {
   width: min(1100px, calc(100% - 16px));
   height: calc(100vh - 16px);
+  height: calc(100dvh - 16px);
   margin: 8px auto;
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
@@ -69,8 +71,8 @@ body {
   position: relative;
   background: var(--panel);
   border: 1px solid var(--panel-border);
-  border-radius: 24px;
-  backdrop-filter: blur(14px);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
   box-shadow: var(--shadow-cyan), var(--shadow-pink);
 }
 
@@ -78,6 +80,7 @@ body {
   padding: 14px;
   display: flex;
   flex-direction: column;
+  gap: 10px;
   min-height: 0;
 }
 
@@ -146,7 +149,7 @@ h1 {
 
 .canvas-wrap {
   position: relative;
-  border-radius: 20px;
+  border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(0, 246, 255, 0.2);
   display: flex;
@@ -154,6 +157,7 @@ h1 {
   align-items: center;
   flex: 1;
   min-height: 0;
+  background: rgba(2, 6, 18, 0.72);
 }
 
 #game {
@@ -179,7 +183,7 @@ h1 {
       transparent 4px
     );
   mix-blend-mode: screen;
-  opacity: 0.25;
+  opacity: 0.13;
 }
 
 .sidebar {
@@ -373,6 +377,7 @@ kbd {
 .mobile-pause-btn {
   width: 56px;
   min-width: 56px;
+  min-height: 56px;
   border: 1px solid rgba(0, 246, 255, 0.3);
   border-radius: 14px;
   background: rgba(0, 246, 255, 0.08);
@@ -381,22 +386,59 @@ kbd {
   cursor: pointer;
 }
 
+.touch-controls {
+  display: none;
+}
+
+.touch-btn {
+  min-width: 0;
+  min-height: 52px;
+  border: 1px solid rgba(0, 246, 255, 0.24);
+  border-radius: 12px;
+  background: rgba(4, 14, 32, 0.9);
+  color: #f5feff;
+  box-shadow: inset 0 0 16px rgba(0, 246, 255, 0.08);
+  cursor: pointer;
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.touch-btn:active {
+  transform: translateY(1px);
+  border-color: rgba(0, 255, 163, 0.45);
+  background: rgba(0, 246, 255, 0.14);
+}
+
+.touch-btn-strong {
+  color: #04111b;
+  border-color: rgba(0, 255, 163, 0.5);
+  background: linear-gradient(180deg, var(--green), #76ffd0);
+}
+
 @media (max-width: 900px) {
   body {
     overflow-x: hidden;
     overflow-y: auto;
-    padding-bottom: 130px;
+    padding: 8px 8px max(8px, env(safe-area-inset-bottom));
   }
 
   .app {
+    width: min(100%, 430px);
     height: auto;
+    min-height: calc(100dvh - 16px - env(safe-area-inset-bottom));
+    margin: 0 auto;
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 8px;
   }
 
   .game-panel {
-    height: auto;
+    min-height: calc(100dvh - 16px - env(safe-area-inset-bottom));
     padding: 10px;
+    gap: 8px;
   }
 
   .panel-header h1 {
@@ -422,13 +464,29 @@ kbd {
 
   .sidebar {
     overflow: visible;
-    gap: 10px;
+    gap: 8px;
+  }
+
+  .canvas-wrap {
+    flex: 0 0 auto;
+    align-self: center;
+    width: clamp(230px, min(88vw, calc((100dvh - 230px) / 2)), 320px);
+    max-width: 100%;
+    aspect-ratio: 1 / 2;
   }
 
   #game {
     width: 100%;
-    max-width: 260px;
-    height: auto;
+    max-width: none;
+    height: 100%;
+  }
+
+  .touch-controls {
+    display: grid;
+    align-self: center;
+    width: min(100%, 360px);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .card {

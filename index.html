@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Cyberpunk Тетрис</title>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -43,10 +43,18 @@
           </div>
       </section>
       
-        <div class="canvas-wrap">
+      <div class="canvas-wrap">
         <canvas id="game" width="300" height="600"></canvas>
         <div class="scanlines"></div>
       </div>
+
+      <section class="touch-controls" aria-label="Сенсорное управление">
+        <button class="touch-btn" type="button" data-action="left" aria-label="Влево" title="Влево">←</button>
+        <button class="touch-btn" type="button" data-action="rotate" aria-label="Повернуть" title="Повернуть">↻</button>
+        <button class="touch-btn" type="button" data-action="right" aria-label="Вправо" title="Вправо">→</button>
+        <button class="touch-btn" type="button" data-action="soft-drop" aria-label="Опустить" title="Опустить">↓</button>
+        <button class="touch-btn touch-btn-strong" type="button" data-action="hard-drop" aria-label="Бросить вниз" title="Бросить вниз">⇩</button>
+      </section>
     </section>
 
     <aside class="sidebar">
