@@ -160,6 +160,38 @@ h1 {
   background: rgba(2, 6, 18, 0.72);
 }
 
+.canvas-wrap.haptic-soft {
+  animation: hapticSoft 150ms ease-out;
+}
+
+.canvas-wrap.haptic-medium {
+  animation: hapticMedium 190ms ease-out;
+}
+
+.canvas-wrap.haptic-strong {
+  animation: hapticStrong 240ms ease-out;
+}
+
+.canvas-wrap.haptic-soft::after,
+.canvas-wrap.haptic-medium::after,
+.canvas-wrap.haptic-strong::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(0, 246, 255, 0.22), transparent 58%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: hapticGlow 240ms ease-out;
+}
+
+.canvas-wrap.haptic-strong::after {
+  background:
+    radial-gradient(circle at center, rgba(0, 255, 163, 0.24), transparent 48%),
+    linear-gradient(180deg, rgba(255, 43, 214, 0.12), rgba(0, 246, 255, 0.12));
+}
+
 #game {
   display: block;
   height: 100%;
@@ -690,6 +722,57 @@ kbd {
   }
 }
 
+@keyframes hapticSoft {
+  0% {
+    transform: translateY(0);
+  }
+  45% {
+    transform: translateY(1px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes hapticMedium {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  40% {
+    transform: translateY(2px) scale(0.997);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes hapticStrong {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  32% {
+    transform: translateY(3px) scale(0.994);
+  }
+  64% {
+    transform: translateY(-1px) scale(1.002);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes hapticGlow {
+  0% {
+    opacity: 0;
+  }
+  36% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 @keyframes feedbackPop {
   0% {
     opacity: 0;
@@ -729,6 +812,17 @@ kbd {
   }
   100% {
     text-shadow: 0 0 0 rgba(0, 255, 163, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canvas-wrap.haptic-soft,
+  .canvas-wrap.haptic-medium,
+  .canvas-wrap.haptic-strong,
+  .canvas-wrap.haptic-soft::after,
+  .canvas-wrap.haptic-medium::after,
+  .canvas-wrap.haptic-strong::after {
+    animation: none;
   }
 }
 

@@ -33,6 +33,7 @@ const overlayPrimaryBtn = document.getElementById("overlayPrimaryBtn");
 const overlayRestartBtn = document.getElementById("overlayRestartBtn");
 const gameEffectsEl = document.getElementById("gameEffects");
 const feedbackPopEl = document.getElementById("feedbackPop");
+const canvasWrapEl = document.querySelector(".canvas-wrap");
 
 const scoreEl = document.getElementById("score");
 const linesEl = document.getElementById("lines");
@@ -258,9 +259,24 @@ function restartCssAnimation(element, className) {
 }
 
 function vibrate(pattern) {
-  if (!("vibrate" in navigator)) return;
+  if (!("vibrate" in navigator)) return false;
 
-  navigator.vibrate(pattern);
+  return navigator.vibrate(pattern);
+}
+
+function triggerHapticFallback(type) {
+  if (!canvasWrapEl) return;
+
+  const fallbackClass =
+    type === "record" || type === "tetris"
+      ? "haptic-strong"
+      : type === "line"
+        ? "haptic-medium"
+        : "haptic-soft";
+
+  canvasWrapEl.classList.remove("haptic-soft", "haptic-medium", "haptic-strong");
+  void canvasWrapEl.offsetWidth;
+  canvasWrapEl.classList.add(fallbackClass);
 }
 
 function flashGameEffect(type) {
@@ -282,7 +298,10 @@ function showFeedback(text, type = "line") {
 function triggerFeedback(type, text, vibrationPattern) {
   flashGameEffect(type);
   showFeedback(text, type);
-  vibrate(vibrationPattern);
+
+  if (!vibrate(vibrationPattern)) {
+    triggerHapticFallback(type);
+  }
 }
 
 function bumpElement(element, className = "stat-bump") {
