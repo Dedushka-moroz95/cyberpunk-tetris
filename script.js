@@ -9,12 +9,6 @@ const nextPreviews = Array.from(document.querySelectorAll("[data-next-index]"))
     blockSize: Number(canvas.dataset.previewBlockSize || 18),
   }))
   .sort((a, b) => a.index - b.index);
-const holdPreviews = Array.from(document.querySelectorAll("[data-hold-preview]"))
-  .map((canvas) => ({
-    canvas,
-    ctx: canvas.getContext("2d"),
-    blockSize: Number(canvas.dataset.previewBlockSize || 18),
-  }));
 
 const scoreMobileEl = document.getElementById("scoreMobile");
 const linesMobileEl = document.getElementById("linesMobile");
@@ -121,8 +115,6 @@ const I_WALL_KICKS = {
 let board = [];
 let player = null;
 let nextQueue = [];
-let holdPiece = null;
-let canHold = true;
 let score = 0;
 let lines = 0;
 let level = 1;
@@ -424,8 +416,6 @@ function resetGame() {
   recordAnnounced = false;
   pieceBag = [];
   nextQueue = [];
-  holdPiece = null;
-  canHold = true;
   lockCounter = 0;
   lockResetCount = 0;
 
@@ -581,10 +571,6 @@ function drawPreviewPiece(target, piece) {
 function drawPiecePreviews() {
   nextPreviews.forEach((target) => {
     drawPreviewPiece(target, nextQueue[target.index]);
-  });
-
-  holdPreviews.forEach((target) => {
-    drawPreviewPiece(target, holdPiece);
   });
 }
 
@@ -761,38 +747,12 @@ function spawnPiece() {
 
   player = createActivePiece(nextPiece);
   resetLockState();
-  canHold = true;
   drawPiecePreviews();
 
   if (collide()) {
     isGameOver = true;
     updateStatus("ЗАВЕРШЕНО", "gameover");
   }
-}
-
-function holdCurrentPiece() {
-  if (!canControlPiece() || !canHold) return false;
-
-  const currentPiece = createPiece(player.type);
-
-  if (holdPiece) {
-    const swappedPiece = holdPiece;
-    holdPiece = currentPiece;
-    player = createActivePiece(swappedPiece);
-    resetLockState();
-
-    if (collide()) {
-      isGameOver = true;
-      updateStatus("ЗАВЕРШЕНО", "gameover");
-    }
-  } else {
-    holdPiece = currentPiece;
-    spawnPiece();
-  }
-
-  canHold = false;
-  drawPiecePreviews();
-  return true;
 }
 
 function canControlPiece() {
@@ -1030,9 +990,6 @@ function performControlAction(action) {
     case "rotate":
       playerRotate();
       break;
-    case "hold":
-      holdCurrentPiece();
-      break;
     case "hard-drop":
       hardDrop();
       break;
@@ -1045,9 +1002,6 @@ const KEY_ACTIONS = {
   ArrowDown: "soft-drop",
   ArrowUp: "rotate",
   Space: "hard-drop",
-  KeyC: "hold",
-  ShiftLeft: "hold",
-  ShiftRight: "hold",
   KeyP: "pause",
   Enter: "start",
 };

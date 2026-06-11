@@ -35,11 +35,6 @@
 
           <div class="mobile-hud-row">
             <div class="mobile-piece-box">
-              <span class="mobile-next-label">Холд</span>
-              <canvas id="holdPieceMobile" data-hold-preview data-preview-block-size="18" width="88" height="88"></canvas>
-            </div>
-
-            <div class="mobile-piece-box">
               <span class="mobile-next-label">След.</span>
               <canvas id="nextPieceMobile" data-next-index="0" data-preview-block-size="18" width="88" height="88"></canvas>
             </div>
@@ -57,7 +52,6 @@
         <button class="touch-btn" type="button" data-action="left" aria-label="Влево" title="Влево">←</button>
         <button class="touch-btn" type="button" data-action="rotate" aria-label="Повернуть" title="Повернуть">↻</button>
         <button class="touch-btn" type="button" data-action="right" aria-label="Вправо" title="Вправо">→</button>
-        <button class="touch-btn touch-btn-hold" type="button" data-action="hold" aria-label="Удержать фигуру" title="Удержать фигуру">H</button>
         <button class="touch-btn" type="button" data-action="soft-drop" aria-label="Опустить" title="Опустить">↓</button>
         <button class="touch-btn touch-btn-strong" type="button" data-action="hard-drop" aria-label="Бросить вниз" title="Бросить вниз">⇩</button>
       </section>
@@ -107,20 +101,13 @@
         <div class="stat-row"><span>Лучший результат</span><strong id="best">0</strong></div>
       </section>
 
-      <section class="card hold-card">
-        <h2>Удержание</h2>
-        <div class="piece-preview-wrap">
-          <canvas id="holdPiece" data-hold-preview data-preview-block-size="22" width="112" height="112"></canvas>
-        </div>
-      </section>
-
       <section class="card next-card">
         <h2>Очередь фигур</h2>
         <div class="next-queue">
-          <canvas id="nextPiece" data-next-index="0" data-preview-block-size="22" width="112" height="112"></canvas>
-          <canvas data-next-index="1" data-preview-block-size="18" width="88" height="88"></canvas>
-          <canvas data-next-index="2" data-preview-block-size="18" width="88" height="88"></canvas>
-          <canvas data-next-index="3" data-preview-block-size="18" width="88" height="88"></canvas>
+          <canvas id="nextPiece" data-next-index="0" data-preview-block-size="18" width="88" height="88"></canvas>
+          <canvas data-next-index="1" data-preview-block-size="16" width="76" height="76"></canvas>
+          <canvas data-next-index="2" data-preview-block-size="16" width="76" height="76"></canvas>
+          <canvas data-next-index="3" data-preview-block-size="16" width="76" height="76"></canvas>
         </div>
       </section>
 
@@ -131,7 +118,6 @@
           <div><kbd>↑</kbd> вращать</div>
           <div><kbd>↓</kbd> слегка опустить</div>
           <div><kbd>Space</kbd> опустить полностью</div>
-          <div><kbd>C</kbd><kbd>Shift</kbd> удержать фигуру</div>
           <div><kbd>P</kbd> пауза</div>
         </div>
       </section>
@@ -143,13 +129,6 @@
           <button id="pauseBtn" class="btn btn-secondary">Пауза</button>
           <button id="clearBestBtn" class="btn btn-danger">Сбросить лучший результат</button>
         </div>
-      </section>
-
-      <section class="card note">
-        <p>
-          Небольшой эксперимент для портфолио: ванильный HTML/CSS/JS,
-          но с более выразительным визуалом.
-        </p>
       </section>
     </aside>
   </main>
