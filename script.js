@@ -31,6 +31,8 @@ const overlayLevelEl = document.getElementById("overlayLevel");
 const overlayBestEl = document.getElementById("overlayBest");
 const overlayPrimaryBtn = document.getElementById("overlayPrimaryBtn");
 const overlayRestartBtn = document.getElementById("overlayRestartBtn");
+const gameEffectsEl = document.getElementById("gameEffects");
+const feedbackPopEl = document.getElementById("feedbackPop");
 
 const scoreEl = document.getElementById("score");
 const linesEl = document.getElementById("lines");
@@ -145,6 +147,11 @@ let touchEndY = 0;
 let activePointerId = null;
 let repeatDelayId = null;
 let repeatIntervalId = null;
+let previousScore = score;
+let previousLines = lines;
+let previousLevel = level;
+let previousBest = best;
+let recordAnnounced = false;
 
 const TAP_THRESHOLD = 10;
 const SWIPE_THRESHOLD = 28;
@@ -242,6 +249,46 @@ function updateStatus(text, state) {
   updateOverlay();
 }
 
+function restartCssAnimation(element, className) {
+  if (!element) return;
+
+  element.classList.remove(className);
+  void element.offsetWidth;
+  element.classList.add(className);
+}
+
+function vibrate(pattern) {
+  if (!("vibrate" in navigator)) return;
+
+  navigator.vibrate(pattern);
+}
+
+function flashGameEffect(type) {
+  if (!gameEffectsEl) return;
+
+  gameEffectsEl.className = "game-effects";
+  void gameEffectsEl.offsetWidth;
+  gameEffectsEl.classList.add(`flash-${type}`);
+}
+
+function showFeedback(text, type = "line") {
+  if (!feedbackPopEl) return;
+
+  feedbackPopEl.textContent = text;
+  feedbackPopEl.dataset.type = type;
+  restartCssAnimation(feedbackPopEl, "is-visible");
+}
+
+function triggerFeedback(type, text, vibrationPattern) {
+  flashGameEffect(type);
+  showFeedback(text, type);
+  vibrate(vibrationPattern);
+}
+
+function bumpElement(element, className = "stat-bump") {
+  restartCssAnimation(element, className);
+}
+
 function updateOverlay() {
   if (!gameOverlayEl) return;
 
@@ -283,6 +330,11 @@ function updateOverlay() {
 }
 
 function updateUI() {
+  const scoreChanged = score !== previousScore;
+  const linesChanged = lines !== previousLines;
+  const levelChanged = level !== previousLevel;
+  const bestChanged = best !== previousBest;
+
   scoreEl.textContent = score;
   linesEl.textContent = lines;
   levelEl.textContent = level;
@@ -299,6 +351,45 @@ function updateUI() {
   }
 
   updateOverlay();
+
+  if (scoreChanged) {
+    bumpElement(scoreEl);
+    bumpElement(scoreMobileEl);
+    bumpElement(overlayScoreEl);
+  }
+
+  if (linesChanged) {
+    bumpElement(linesEl);
+    bumpElement(linesMobileEl);
+    bumpElement(overlayLinesEl);
+  }
+
+  if (levelChanged) {
+    bumpElement(levelEl);
+    bumpElement(levelMobileEl);
+    bumpElement(overlayLevelEl);
+  }
+
+  if (bestChanged) {
+    bumpElement(bestEl, "record-glow");
+    bumpElement(overlayBestEl, "record-glow");
+
+    if (
+      gameStarted &&
+      previousBest > 0 &&
+      score > 0 &&
+      score === best &&
+      !recordAnnounced
+    ) {
+      recordAnnounced = true;
+      triggerFeedback("record", "Новый рекорд", [35, 40, 55]);
+    }
+  }
+
+  previousScore = score;
+  previousLines = lines;
+  previousLevel = level;
+  previousBest = best;
 }
 
 function resetGame() {
@@ -311,6 +402,7 @@ function resetGame() {
   isPaused = false;
   isGameOver = false;
   gameStarted = true;
+  recordAnnounced = false;
   pieceBag = [];
   nextQueue = [];
   holdPiece = null;
@@ -593,6 +685,17 @@ function clearLines() {
     clearingRows = fullRows;
     clearAnimationStart = performance.now();
     isClearing = true;
+
+    if (fullRows.length === 4) {
+      triggerFeedback("tetris", "Тетрис", [30, 35, 30, 35, 70]);
+    } else {
+      triggerFeedback(
+        "line",
+        fullRows.length === 1 ? "Линия" : `${fullRows.length} линии`,
+        [22, 28, 38]
+      );
+    }
+
     return true;
   }
 
@@ -747,6 +850,7 @@ function hardDrop() {
 
   if (dropped > 0) {
     addScore(dropped * 2);
+    triggerFeedback("drop", `+${dropped * 2}`, 18);
   }
 
   lockPiece();

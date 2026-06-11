@@ -223,6 +223,7 @@ h1 {
 }
 
 .stat-row strong {
+  display: inline-block;
   color: #fff;
   text-shadow: 0 0 12px rgba(0, 246, 255, 0.25);
   font-size: 0.95rem;
@@ -365,6 +366,7 @@ kbd {
 }
 
 .mini-stat strong {
+  display: inline-block;
   color: #fff;
   font-size: 1rem;
   text-shadow: 0 0 12px rgba(0, 246, 255, 0.25);
@@ -451,6 +453,108 @@ kbd {
 .touch-btn-hold {
   color: var(--green);
   border-color: rgba(0, 255, 163, 0.32);
+}
+
+.game-effects {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.game-effects::before,
+.game-effects::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.game-effects::before {
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.42), transparent 56%);
+}
+
+.game-effects::after {
+  border: 1px solid rgba(0, 246, 255, 0.45);
+  box-shadow: inset 0 0 28px rgba(0, 246, 255, 0.22);
+}
+
+.game-effects.flash-line {
+  animation: effectPulse 260ms ease-out;
+}
+
+.game-effects.flash-tetris {
+  animation: effectPulse 420ms ease-out;
+}
+
+.game-effects.flash-drop {
+  animation: effectDrop 180ms ease-out;
+}
+
+.game-effects.flash-record {
+  animation: effectRecord 620ms ease-out;
+}
+
+.game-effects.flash-line::before,
+.game-effects.flash-tetris::before,
+.game-effects.flash-drop::before,
+.game-effects.flash-record::before,
+.game-effects.flash-line::after,
+.game-effects.flash-tetris::after,
+.game-effects.flash-drop::after,
+.game-effects.flash-record::after {
+  opacity: 1;
+}
+
+.feedback-pop {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  z-index: 5;
+  pointer-events: none;
+  min-width: 120px;
+  padding: 9px 14px;
+  border: 1px solid rgba(0, 246, 255, 0.32);
+  border-radius: 12px;
+  background: rgba(5, 10, 28, 0.86);
+  color: #fff;
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+  box-shadow: 0 0 18px rgba(0, 246, 255, 0.18);
+  opacity: 0;
+  transform: translate(-50%, 10px) scale(0.96);
+}
+
+.feedback-pop.is-visible {
+  animation: feedbackPop 720ms ease-out;
+}
+
+.feedback-pop[data-type="drop"] {
+  border-color: rgba(255, 255, 255, 0.26);
+}
+
+.feedback-pop[data-type="tetris"] {
+  border-color: rgba(255, 43, 214, 0.46);
+  box-shadow: 0 0 22px rgba(255, 43, 214, 0.24);
+}
+
+.feedback-pop[data-type="record"] {
+  color: var(--green);
+  border-color: rgba(0, 255, 163, 0.45);
+  box-shadow: 0 0 24px rgba(0, 255, 163, 0.22);
+}
+
+.stat-bump {
+  animation: statBump 260ms ease-out;
+}
+
+.record-glow {
+  color: var(--green);
+  animation: recordGlow 780ms ease-out;
 }
 
 .game-overlay {
@@ -547,6 +651,85 @@ kbd {
 
 .overlay-actions .is-hidden {
   display: none;
+}
+
+@keyframes effectPulse {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes effectDrop {
+  0% {
+    opacity: 0.9;
+    transform: translateY(-2px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes effectRecord {
+  0% {
+    opacity: 0;
+    filter: hue-rotate(0deg);
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    filter: hue-rotate(80deg);
+  }
+}
+
+@keyframes feedbackPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 12px) scale(0.94);
+  }
+  18% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -14px) scale(0.98);
+  }
+}
+
+@keyframes statBump {
+  0% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.14);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes recordGlow {
+  0% {
+    text-shadow: 0 0 0 rgba(0, 255, 163, 0);
+  }
+  35% {
+    text-shadow: 0 0 18px rgba(0, 255, 163, 0.85);
+  }
+  100% {
+    text-shadow: 0 0 0 rgba(0, 255, 163, 0);
+  }
 }
 
 @media (max-width: 900px) {
