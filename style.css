@@ -632,6 +632,33 @@ kbd {
   font-size: 0.94rem;
 }
 
+.overlay-hints {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.overlay-hints span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 7px 8px;
+  border: 1px solid rgba(0, 246, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(0, 246, 255, 0.07);
+  color: #e7faff;
+  font-size: 0.74rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.overlay-hints.is-hidden {
+  display: none;
+}
+
 .overlay-scoreboard {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -976,6 +1003,18 @@ kbd {
 
   .overlay-scoreboard {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .overlay-hints {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .overlay-hints span {
+    min-height: 30px;
+    padding: 6px 8px;
+    font-size: 0.72rem;
   }
 
   .card {

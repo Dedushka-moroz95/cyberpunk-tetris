@@ -20,6 +20,7 @@ const gameOverlayEl = document.getElementById("gameOverlay");
 const overlayKickerEl = document.getElementById("overlayKicker");
 const overlayTitleEl = document.getElementById("overlayTitle");
 const overlayMessageEl = document.getElementById("overlayMessage");
+const overlayHintsEl = document.getElementById("overlayHints");
 const overlayScoreEl = document.getElementById("overlayScore");
 const overlayLinesEl = document.getElementById("overlayLines");
 const overlayLevelEl = document.getElementById("overlayLevel");
@@ -199,10 +200,31 @@ function isMobileLayout() {
 
 function getStartOverlayMessage() {
   if (isMobileLayout()) {
-    return "Кнопки снизу или свайпы по полю. Тап — поворот, свайп вниз — падение.";
+    return "Можно играть кнопками снизу или жестами по полю.";
   }
 
-  return "Стрелки — движение и поворот, Space — падение. На телефоне работают кнопки и свайпы.";
+  return "На компьютере работает клавиатура. На телефоне доступны кнопки и свайпы.";
+}
+
+function getStartOverlayHints() {
+  if (isMobileLayout()) {
+    return ["Кнопки снизу", "Тап: поворот", "Свайп вниз: падение"];
+  }
+
+  return ["Стрелки: движение", "Вверх: поворот", "Space: падение"];
+}
+
+function renderOverlayHints(hints = []) {
+  if (!overlayHintsEl) return;
+
+  overlayHintsEl.classList.toggle("is-hidden", hints.length === 0);
+  overlayHintsEl.innerHTML = "";
+
+  hints.forEach((hint) => {
+    const hintEl = document.createElement("span");
+    hintEl.textContent = hint;
+    overlayHintsEl.append(hintEl);
+  });
 }
 
 function saveBestScore() {
@@ -351,11 +373,13 @@ function updateOverlay() {
   if (!shouldShow) return;
 
   overlayRestartBtn.classList.add("is-hidden");
+  renderOverlayHints([]);
 
   if (!gameStarted) {
     overlayKickerEl.textContent = "CYBERPUNK TETRIS";
     overlayTitleEl.textContent = "Готов к запуску";
     overlayMessageEl.textContent = getStartOverlayMessage();
+    renderOverlayHints(getStartOverlayHints());
     overlayPrimaryBtn.textContent = "Начать игру";
     return;
   }
@@ -1199,6 +1223,9 @@ function handleGesture() {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+    navigator.serviceWorker
+      .register("./service-worker.js")
+      .then((registration) => registration.update())
+      .catch(() => {});
   });
 }

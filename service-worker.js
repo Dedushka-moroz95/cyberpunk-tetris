@@ -1,4 +1,4 @@
-const CACHE_NAME = "cyberpunk-tetris-v3";
+const CACHE_NAME = "cyberpunk-tetris-v4";
 const CORE_ASSETS = [
   "./",
   "./index.html",
