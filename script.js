@@ -150,7 +150,7 @@ let recordAnnounced = false;
 
 const TAP_THRESHOLD = 10;
 const SWIPE_THRESHOLD = 28;
-const HARD_DROP_SWIPE_THRESHOLD = 110;
+const HARD_DROP_SWIPE_THRESHOLD = 140;
 const REPEAT_DELAY = 170;
 const REPEAT_INTERVAL = 65;
 
@@ -208,7 +208,7 @@ function getStartOverlayMessage() {
 
 function getStartOverlayHints() {
   if (isMobileLayout()) {
-    return ["Кнопки снизу", "Тап: поворот", "Свайп вниз: падение"];
+    return ["Тап: мягко вниз", "Свайп вверх: поворот", "Свайп вниз: hard drop"];
   }
 
   return ["Стрелки: движение", "Вверх: поворот", "Space: падение"];
@@ -1200,7 +1200,7 @@ function handleGesture() {
   if (!canControlPiece()) return;
 
   if (Math.abs(dx) < TAP_THRESHOLD && Math.abs(dy) < TAP_THRESHOLD) {
-    performControlAction("rotate");
+    performControlAction("soft-drop");
     return;
   }
 
@@ -1213,8 +1213,6 @@ function handleGesture() {
   } else {
     if (dy > HARD_DROP_SWIPE_THRESHOLD) {
       performControlAction("hard-drop");
-    } else if (dy > SWIPE_THRESHOLD) {
-      performControlAction("soft-drop");
     } else if (dy < -SWIPE_THRESHOLD) {
       performControlAction("rotate");
     }
