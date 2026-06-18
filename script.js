@@ -13,6 +13,7 @@ const nextPreviews = Array.from(document.querySelectorAll("[data-next-index]"))
 const scoreMobileEl = document.getElementById("scoreMobile");
 const linesMobileEl = document.getElementById("linesMobile");
 const levelMobileEl = document.getElementById("levelMobile");
+const mobileRestartBtn = document.getElementById("mobileRestartBtn");
 const mobilePauseBtn = document.getElementById("mobilePauseBtn");
 const touchButtons = document.querySelectorAll("[data-action]");
 const gameOverlayEl = document.getElementById("gameOverlay");
@@ -153,8 +154,13 @@ const REPEAT_DELAY = 170;
 const REPEAT_INTERVAL = 65;
 
 bestEl.textContent = best;
+setAppViewportHeight();
 setupCanvasScale();
-window.addEventListener("resize", setupCanvasScale);
+window.addEventListener("resize", handleViewportResize);
+window.visualViewport?.addEventListener("resize", setAppViewportHeight);
+window.addEventListener("orientationchange", () => {
+  window.setTimeout(handleViewportResize, 250);
+});
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => Array(COLS).fill(0));
@@ -173,6 +179,17 @@ function setupCanvasScale() {
   canvas.style.aspectRatio = `${COLS} / ${ROWS}`;
   ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
   ctx.imageSmoothingEnabled = false;
+}
+
+function setAppViewportHeight() {
+  const viewportHeight = window.visualViewport?.height || window.innerHeight;
+
+  document.documentElement.style.setProperty("--app-height", `${Math.round(viewportHeight)}px`);
+}
+
+function handleViewportResize() {
+  setAppViewportHeight();
+  setupCanvasScale();
 }
 
 function saveBestScore() {
@@ -1041,6 +1058,10 @@ if (overlayPrimaryBtn) {
 
 if (overlayRestartBtn) {
   overlayRestartBtn.addEventListener("click", resetGame);
+}
+
+if (mobileRestartBtn) {
+  mobileRestartBtn.addEventListener("click", resetGame);
 }
 
 if (mobilePauseBtn) {
