@@ -509,21 +509,15 @@ kbd {
   animation: effectPulse 420ms ease-out;
 }
 
-.game-effects.flash-drop {
-  animation: effectDrop 180ms ease-out;
-}
-
 .game-effects.flash-record {
   animation: effectRecord 620ms ease-out;
 }
 
 .game-effects.flash-line::before,
 .game-effects.flash-tetris::before,
-.game-effects.flash-drop::before,
 .game-effects.flash-record::before,
 .game-effects.flash-line::after,
 .game-effects.flash-tetris::after,
-.game-effects.flash-drop::after,
 .game-effects.flash-record::after {
   opacity: 1;
 }
@@ -683,17 +677,6 @@ kbd {
   }
   100% {
     opacity: 0;
-  }
-}
-
-@keyframes effectDrop {
-  0% {
-    opacity: 0.9;
-    transform: translateY(-2px);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(10px);
   }
 }
 

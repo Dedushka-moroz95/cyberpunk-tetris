@@ -288,10 +288,15 @@ function showFeedback(text, type = "line") {
 }
 
 function triggerFeedback(type, text, vibrationPattern) {
-  flashGameEffect(type);
+  const shouldAnimateField = type !== "drop";
+
+  if (shouldAnimateField) {
+    flashGameEffect(type);
+  }
+
   showFeedback(text, type);
 
-  if (!vibrate(vibrationPattern)) {
+  if (!vibrate(vibrationPattern) && shouldAnimateField) {
     triggerHapticFallback(type);
   }
 }
