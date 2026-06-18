@@ -190,6 +190,19 @@ function setAppViewportHeight() {
 function handleViewportResize() {
   setAppViewportHeight();
   setupCanvasScale();
+  updateOverlay();
+}
+
+function isMobileLayout() {
+  return window.matchMedia("(max-width: 900px), (pointer: coarse)").matches;
+}
+
+function getStartOverlayMessage() {
+  if (isMobileLayout()) {
+    return "Кнопки снизу или свайпы по полю. Тап — поворот, свайп вниз — падение.";
+  }
+
+  return "Стрелки — движение и поворот, Space — падение. На телефоне работают кнопки и свайпы.";
 }
 
 function saveBestScore() {
@@ -342,7 +355,7 @@ function updateOverlay() {
   if (!gameStarted) {
     overlayKickerEl.textContent = "CYBERPUNK TETRIS";
     overlayTitleEl.textContent = "Готов к запуску";
-    overlayMessageEl.textContent = "Поле свободно. Можно начинать.";
+    overlayMessageEl.textContent = getStartOverlayMessage();
     overlayPrimaryBtn.textContent = "Начать игру";
     return;
   }
